@@ -6,15 +6,13 @@
 Meteor.methods({
   meteorFileUpload: function(mf) {
     console.log('Uploading '+ mf.name +': ' + mf.uploadProgress +'% done');
-    all = JobQueue.find({}).count();
-    console.log(all);
+
     jq = JobQueue.find({
-      "settings.name": mf.name
-      //settings: {file: {name: mf.name}}
-      //processor: 'UploadProcessor'
-    }).fetch();
-    console.log(jq.length);
-    if (jq.length > 0)
+      "settings.file.name": mf.name,
+      processor: 'UploadProcessor'
+    });
+
+    if (jq.count() > 0)
     { //will this ever be equal to something other than 1 if it's > 0?
       //JobQueue.update({settings: {file: mf.name}, processor: 'UploadProcessor'},
         //{$set: {status: mf.uploadProgress}});
@@ -22,8 +20,12 @@ Meteor.methods({
     }
     else
     {
-      ScheduleJob('UploadProcessor', [], _.extend({}, mf));
-      console.log('added to the queue in meteorFileUpload');
+      // Let's just hang on to the important aspects
+      serializableFile = _.pick(mf, 'name', 'type', 'size');
+      //serializableFile = _.omit(mf, 'data');  // For some reason, _.pick works but _.omit does not
+      
+      jobId = ScheduleJob('UploadProcessor', [], { file: serializableFile });
+      console.log('added to the queue in meteorFileUpload with id ' + jobId);
     }
   }
 });
