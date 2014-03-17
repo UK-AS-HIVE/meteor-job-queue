@@ -26,7 +26,7 @@ ScheduleJobPipeline = (pipeline) ->
     status: 'pending'
 
 class Processor
-  constructor: (@settings) ->
+  constructor: (@jobQueueId, @settings) ->
     console.log 'File processing ' + @settings.file
     processor = this
     processorType = @constructor.name
@@ -35,7 +35,7 @@ class Processor
     console.log 'Process the file here, a long running process'
   
   setStatus: (s) ->
-    JobQueue.update {_id: processor.job},{$set: {status: s}}
+    JobQueue.update {_id: @jobQueueId}, {$set: {status: s}}
   
   @inputSchema: {}
   
@@ -75,15 +75,20 @@ class UploadProcessor extends Processor
     #Save to disk -- will append as new sections come in
     path = cleanPath path 
     fs = Npm.require 'fs'
-    name = cleanName (@sourcefile.name || 'file') 
+    name = cleanName (@settings.file.name || 'file') 
     encoding = encoding || 'binary'
     chroot = Meteor.chroot || 'uploads'
     path = chroot + (if path then '/' + path + '/' else '/');
     
     #TODO Add file existance checks, etc...
-    console.log 'Writing ' + path + @sourcefile.name
+    console.log 'Writing ' + path + @settings.file.name
 
-    @sourcefile.save path
+    mf = CurrentUploads[JSON.stringify(@settings.file)]
+
+    if mf.size is mf.end
+      @setStatus 'done'
+
+    mf.save path
     console.log 'Written!'
 
 class Md5FileProcessor extends Processor
@@ -145,6 +150,8 @@ class Tika extends Processor
   Md5: Md5FileProcessor
   Tika: Tika
   Upload: UploadProcessor
+
+(exports ? this).UploadProcessor = UploadProcessor
  
 #helpers
 cleanPath = (str) ->

@@ -14,8 +14,8 @@ Meteor.methods({
 
     if (jq.count() > 0)
     { //will this ever be equal to something other than 1 if it's > 0?
-      //JobQueue.update({settings: {file: mf.name}, processor: 'UploadProcessor'},
-        //{$set: {status: mf.uploadProgress}});
+      JobQueue.update({'settings.file.name': mf.name, processor: 'UploadProcessor'},
+        {$set: {status: mf.end === mf.size ? 'done' : mf.uploadProgress+'%' }});
       console.log("updating job");
     }
     else
@@ -24,6 +24,8 @@ Meteor.methods({
       serializableFile = _.pick(mf, 'name', 'type', 'size');
       //serializableFile = _.omit(mf, 'data');  // For some reason, _.pick works but _.omit does not
       
+      CurrentUploads[JSON.stringify(serializableFile)] = mf;
+
       jobId = ScheduleJob('UploadProcessor', [], { file: serializableFile });
       console.log('added to the queue in meteorFileUpload with id ' + jobId);
     }
