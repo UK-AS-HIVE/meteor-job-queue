@@ -3,6 +3,7 @@
     "npm": {},
     "font-awesome": {},
     "moment": {},
-    "meteor-file": {}
+    "meteor-file": {},
+    "simple-schema": {}
   }
 }

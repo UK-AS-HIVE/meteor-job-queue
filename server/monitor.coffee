@@ -10,10 +10,13 @@ claim = (id) ->
   job = JobQueue.findOne {_id: id, hostname: myHostName}
   console.log job
   #parse the object and creat an appropriate processor
-  processor = new window[job.processor](id, job.settings)
+  processorClass = window[job.processor]
+  processor = new processorClass(id, job.settings)
   console.log processor
   numOfProcessorsRunning++
-  processor.process()
+  output = processor.process()
+  if not processorClass.outputSchema.namedContext('processorOutput').validate output
+    console.log 'Processor output failed schema validation for job ' + _id
   numOfProcessorsRunning--
 
 

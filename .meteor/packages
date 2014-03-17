@@ -10,3 +10,4 @@ preserve-inputs
 coffeescript
 meteor-file
 moment
+simple-schema

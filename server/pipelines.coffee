@@ -91,6 +91,18 @@ class UploadProcessor extends Processor
     mf.save path
     console.log 'Written!'
 
+    return _.pick @settings, 'file'
+
+  @outputSchema: new SimpleSchema
+    file:
+      type: Object
+    'file.name':
+      type: String
+    'file.type':
+      type: String
+    'file.size':
+      type: Number
+
 class Md5FileProcessor extends Processor
   process: ->
     fs = Npm.require 'fs'
