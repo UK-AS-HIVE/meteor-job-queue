@@ -27,7 +27,8 @@ ScheduleJobPipeline = (pipeline) ->
 
 class Processor
   constructor: (@jobQueueId, @settings) ->
-    console.log 'File processing ' + @settings.file
+    console.log 'New ' + @constructor.name + ':'
+    console.log @settings.file
     processor = this
     processorType = @constructor.name
 
@@ -60,7 +61,7 @@ class ThumbnailProcessor extends Processor
     ###
     Future = Npm.require 'fibers/future'
     im = Meteor.require 'imagemagick'
-    f = @sourcefile
+    f = @settings.file.name
     md5 = 'this_is_not_an_md5' #TODO might not have an md5
     thumbnailFuture = new Future()
     im.convert [f, '-resize', '64x64', '../overlay_thumbnails/'+md5+'.jpg'], ->
@@ -85,11 +86,14 @@ class UploadProcessor extends Processor
 
     mf = CurrentUploads[JSON.stringify(@settings.file)]
 
-    if mf.size is mf.end
-      @setStatus 'done'
+    if mf?
+      if mf.size is mf.end
+        @setStatus 'done'
 
-    mf.save path
-    console.log 'Written!'
+      mf.save path
+      console.log 'Written!'
+
+    ScheduleJob 'ThumbnailProcessor', [@_id], @settings
 
     return _.pick @settings, 'file'
 
@@ -163,6 +167,7 @@ class Tika extends Processor
   Tika: Tika
   Upload: UploadProcessor
 
+(exports ? this).ThumbnailProcessor = ThumbnailProcessor
 (exports ? this).UploadProcessor = UploadProcessor
  
 #helpers

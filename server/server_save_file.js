@@ -33,8 +33,12 @@ Meteor.methods({
 });
 
 Meteor.startup(function() {
-  //fs = Npm.require('fs');
-  process.chdir('../../../../..'); //this is a nodejs function. We're on the server, remember?
+  cwd = process.cwd();
+  console.log(cwd);
+  if (cwd.indexOf('.meteor') != -1) {
+    console.log('Running unbundled, moving out of .meteor dir');
+    process.chdir('../../../../..'); //this is a nodejs function. We're on the server, remember?
+  }
   console.log('cwd: ' + process.cwd());
   //fs.symlinkSync('../../../../uploads', '.meteor/local/build/uploads');
 });

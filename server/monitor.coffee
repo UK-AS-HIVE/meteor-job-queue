@@ -1,44 +1,58 @@
 numOfProcessorsRunning = 0
-affinity = 1
-myHostName = "test-computer-host-name"
+console.log process.env
+port = parseInt (if process.env.hasOwnProperty 'ROOT_URL' then process.env['ROOT_URL'].replace /[^0-9]/g, '' else process.env['PORT'])
+affinity = if port >= 4000 then 2 else 0
+myHostName = process.env['HOSTNAME'] + ':' + port #process.pid #"test-computer-host-name"
 window = this
 
 (exports ? this).CurrentUploads = {}
 
 
-claim = (id) ->
-  job = JobQueue.findOne {_id: id, hostname: myHostName}
+claim = (job) ->
+
+  #job = JobQueue.findOne {_id: id, hostname: myHostName}
+  id = job._id
+  console.log '*** Claiming a job: ' + job.settings.file.name
   console.log job
   #parse the object and creat an appropriate processor
   processorClass = window[job.processor]
   processor = new processorClass(id, job.settings)
   console.log processor
   numOfProcessorsRunning++
-  output = processor.process()
-  if not processorClass.outputSchema.namedContext('processorOutput').validate output
-    console.log 'Processor output failed schema validation for job ' + _id
-  numOfProcessorsRunning--
+  output = {}
+  try
+    output = processor.process()
+    if not processorClass.outputSchema.namedContext('processorOutput').validate output
+      console.log 'Processor output failed schema validation for job ' + id
+  catch error
+    console.log error
+    JobQueue.update {_id: id}, {$set: {status: 'error'}}
+  finally
+    numOfProcessorsRunning--
+    console.log 'CURRENTLY COMPUTING: ' + numOfProcessorsRunning
 
 
 Meteor.startup ->
-  cursor = JobQueue.find { hostname: {$in: ['', myHostName]} }, {fields: ['hostname', '_id']}
+  console.log 'myHostName: ' + myHostName
+  console.log 'concurrent process limit: ' + affinity
+  cursor = JobQueue.find { hostname: {$in: ['', myHostName]} }#, {fields: ['processor', 'hostname', '_id']}
   observer = cursor.observe
     added: (document) ->
-      if numOfProcessorsRunning < affinity
+      console.log 'Process load for this node: ' + numOfProcessorsRunning + '/' + affinity
+      if numOfProcessorsRunning < affinity or document.processor is 'UploadProcessor'
+        console.log 'Attempting to claim job...'
         id = JobQueue.update {_id: document._id, hostname: ''}, {$set: {hostname: myHostName}}
         if id
-          claim document._id
-        if numOfProcessorsRunning == affinity then observer.stop()
-        #console.log "claiming this process! ID: " + id
-      console.log "a document was added to the job queue"
-      #console.log document
+          #document = JobQueue.findOne {_id: document._id}
+          claim document
+        #if numOfProcessorsRunning == affinity then observer.stop()
     changed: (newDocument, oldDocument) ->
       if numOfProcessorsRunning < affinity
-        #id = JobQueue.update {_id: newDocument._id, hostname: ''}, {$set: {hostname: myHostName}}
-        claim newDocument._id
-        if numOfProcessorsRunning == affinity then observer.stop()
+        id = JobQueue.update {_id: newDocument._id, hostname: ''}, {$set: {hostname: myHostName}}
+        if id
+          #newDocument = JobQueue.findOne {_id: document._id}
+          claim newDocument
+        #if numOfProcessorsRunning == affinity then observer.stop()
       console.log "a document on the job queue was changed"
-      #console.log newDocument
     removed: (oldDocument) ->
       console.log "a document was removed from the job queue"
-      #console.log oldDocument

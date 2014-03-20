@@ -9,7 +9,7 @@
 <template name="queue">
   <h3>Job Queue</h3>
   <table class="table">
-    <thead><th>Job #</th><th>File</th><th>Submit time</th><th>Processor</th><th>Status</th><th>Hostname</th></thead>
+    <thead><th>Job #</th><th>File</th><th>Submit time</th><th>Processor</th><th>Status</th><th>Host</th></thead>
     <tbody>
     {{#each queuedItems}}
     <tr><td>#{{number}}</td><td>{{settings.file.name}}</td><td>{{fromNow submitTime}}</td><td>{{processor}}</td><td>{{status}}</td><td>{{hostname}}</td></tr>
