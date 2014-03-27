@@ -7,42 +7,46 @@ window = this
 
 (exports ? this).CurrentUploads = {}
 
-
 claim = (job) ->
-
-  #job = JobQueue.findOne {_id: id, hostname: myHostName}
-  id = job._id
-  console.log '*** Claiming a job: ' + job.settings.file.name
-  console.log job
-  #parse the object and creat an appropriate processor
-  processorClass = window[job.processor]
-  processor = new processorClass(id, job.settings)
-  console.log processor
-  numOfProcessorsRunning++
-  output = {}
-  try
-    output = processor.process()
-    if not processorClass.outputSchema.namedContext('processorOutput').validate output
-      console.log 'Processor output failed schema validation for job ' + id
-  catch error
-    console.log error
-    JobQueue.update {_id: id}, {$set: {status: 'error'}}
-  finally
-    numOfProcessorsRunning--
-    console.log 'CURRENTLY COMPUTING: ' + numOfProcessorsRunning
-
+  Fiber = Npm.require 'fibers'
+  fiber = new Fiber ->
+    #job = JobQueue.findOne {_id: id, hostname: myHostName}
+    id = job._id
+    console.log '*** Claiming a job: ' + job.settings.file.name
+    console.log job
+    #parse the object and creat an appropriate processor
+    processorClass = window[job.processor] 
+    processor = new processorClass(id, job.settings)
+    console.log processor
+    numOfProcessorsRunning++
+    output = {}
+    #TODO check the to make sure the parentJobs of the processor are completed!
+     
+    try
+      output = processor.process()
+      if not processorClass.outputSchema.namedContext('processorOutput').validate output
+        console.log 'Processor output failed schema validation for job ' + id
+    catch error
+      console.log error
+      JobQueue.update {_id: id}, {$set: {status: 'error'}}
+    finally
+      numOfProcessorsRunning--
+      console.log 'CURRENTLY COMPUTING: ' + numOfProcessorsRunning
+  fiber.run()
 
 Meteor.startup ->
   console.log 'myHostName: ' + myHostName
   console.log 'concurrent process limit: ' + affinity
   cursor = JobQueue.find { hostname: {$in: ['', myHostName]} }#, {fields: ['processor', 'hostname', '_id']}
-  observer = cursor.observe
+  observer = cursor.observe #TODO did not catch when I manually inserted to jobqueue from console
     added: (document) ->
+      console.log Npm.require('fibers').current
+      console.log 'A job was added! Can I take it? Lets see...'
       console.log 'Process load for this node: ' + numOfProcessorsRunning + '/' + affinity
-      if numOfProcessorsRunning < affinity or document.processor is 'UploadProcessor'
+      if numOfProcessorsRunning < affinity or document.processor is 'UploadProcessor' #did we want compute nodes to upload maybe? I thought we discussed only web nodes, but maybe not
         console.log 'Attempting to claim job...'
         id = JobQueue.update {_id: document._id, hostname: ''}, {$set: {hostname: myHostName}}
-        if id
+        if id #ie if the document was succesfully updated to reflect that we have taken it
           #document = JobQueue.findOne {_id: document._id}
           claim document
         #if numOfProcessorsRunning == affinity then observer.stop()

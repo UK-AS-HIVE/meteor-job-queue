@@ -1,3 +1,5 @@
+Fiber = Npm.require 'fibers'
+
 ScheduleJobPipeline = (pipeline) ->
   #[{processorType: processorType, settings: settings],
   #[[processorType, settings],[processorType, settings]...],
@@ -8,16 +10,18 @@ ScheduleJobPipeline = (pipeline) ->
     out
   ###
   parents = []
-  for pipelineIndex in [0..pipeline.length - 1]
+  for pipePart in pipeline
     currentPipePartIds = []
     for job in pipePart
-      currentPipePartIds.push ScheduleJob job.processorType, parents, job.settings
+      currentPipePartIds.push ScheduleJob job.processorType, parents, parents, job.settings #non-obvious, but the second parents arguments is because we are still waitingOn them
     parents = currentPipePartIds
       
-(exports ? @).ScheduleJob = (processorType, parentJobs, settings) ->
+(exports ? @).ScheduleJob = (processorType, parents, waitingOn, settings) ->
+  console.log 'ScheduleJob has been called!'
   JobQueue.insert
     processor: processorType
-    parentJobs: parentJobs
+    parents: parents
+    waitingOn: waitingOn
     settings: settings
     submitTime: new Date()
     userId: '' #TODO make this make sense
@@ -37,6 +41,12 @@ class Processor
   
   setStatus: (s) ->
     JobQueue.update {_id: @jobQueueId}, {$set: {status: s}}
+    #if setting status to complete
+    # remove my ID from any waitingOn fields #because we are finished waiting on me
+  
+  finish: ->
+    setStatus 'done'
+    JobQueue.update {waitingOn: @jobQueueId}, {$pull: {waitingOn: @jobQueueId}}
   
   @inputSchema: {}
   
@@ -62,38 +72,67 @@ class ThumbnailProcessor extends Processor
     Future = Npm.require 'fibers/future'
     im = Meteor.require 'imagemagick'
     f = @settings.file.name
-    md5 = 'this_is_not_an_md5' #TODO might not have an md5
+    console.log "here I am: " + process.cwd() #TODO doesn't print where i am
+    md5 = 'this_is_not_an_md5' #TODO does this need an md5?
     thumbnailFuture = new Future()
-    im.convert [f, '-resize', '64x64', '../overlay_thumbnails/'+md5+'.jpg'], ->
+    im.convert ['uploads/' + f, '-resize', '64x64', './uploads/thumbnail_'+f+'.jpg'], -> #TODO don't use f
+      console.log @
+      console.log arguments
       console.log 'generated thumbnail for ' + f
       thumbnailFuture.return {}
     thumbnailFuture.wait()
     console.log 'finished!'
-    #return anything?
+    #@setStatus 'done'
+    @finish
+
+  @outputSchema: new SimpleSchema
+    file:
+      type: Object
+    'file.name':
+      type: String
+    'file.type':
+      type: String
+      allowedValues: ["jpg"]
+    'file.size':
+      type: Number
+
 
 class UploadProcessor extends Processor
   process: ->
+    console.log 'This is our current fiber (from UploadProcessor): '
+    console.log Fiber.current
     #Save to disk -- will append as new sections come in
     path = cleanPath path 
     fs = Npm.require 'fs'
     name = cleanName (@settings.file.name || 'file') 
     encoding = encoding || 'binary'
     chroot = Meteor.chroot || 'uploads'
-    path = chroot + (if path then '/' + path + '/' else '/');
+    path = chroot + (if path then '/' + path + '/' else '/')
     
     #TODO Add file existance checks, etc...
     console.log 'Writing ' + path + @settings.file.name
 
     mf = CurrentUploads[JSON.stringify(@settings.file)]
 
-    if mf?
-      if mf.size is mf.end
-        @setStatus 'done'
+    if mf? #why this check? Because in the line above, we grab the mf from current uploads
+      ###if mf.size is mf.end
+        #@setStatus 'done'
+        console.log 'about to call schedule job'
+        ScheduleJob 'VideoTranscodeProcessor', [], [], @settings 
+        @finish
+      #mf.save path###
+ 
+      #do while?
+      while mf.end < mf.size
+        mf = CurrentUploads[JSON.stringify(@settings.file)]
+        console.log 'NOT DONE YET'
+        mf.save path
+        console.log 'Fiber.yield() coming up!'
+        Fiber.yield()
 
-      mf.save path
-      console.log 'Written!'
-
-    ScheduleJob 'ThumbnailProcessor', [@_id], @settings
+      console.log 'Okay, done. mf.size='+mf.size+' mf.end='+mf.end
+      console.log 'Written! Scheduling VideoTranscoderProcessor'
+      ScheduleJob 'VideoTranscodeProcessor', [], [], @settings 
 
     return _.pick @settings, 'file'
 
@@ -136,8 +175,7 @@ class Tika extends Processor
 
     f = @sourcefile
 
-    tikaFuture = new Future()
-    tikaComplete = tikaFuture.resolver()
+    tikaFuture = new Future() 
 
     tika = spawn('java', ['-jar', 'tika-app-1.4.jar', '-j', f])
     tika.stdout.parse_text = ''
@@ -159,6 +197,24 @@ class Tika extends Processor
     console.log metadata
     metadata
 
+class VideoTranscodeProcessor extends Processor
+  process: ->
+    spawn = Npm.require('child_process').spawn
+    Future = Npm.require 'fibers/future'
+    
+    ffmpegFuture = new Future() 
+    fileName = @settings.file.name
+    ffmpeg = spawn 'ffmpeg', ['-i', fileName, fileName.substr(0, fileName.indexOf('.'))  + '.avi']
+    ffmpeg.on 'close', (code, signal) ->
+      try
+        console.log 'Video transcoding successful!'
+        ffmpegFuture.return {}
+      catch e
+        console.log 'Error during video transcoding.'
+    ffmpeg.wait()
+    console.log 'Finished with this VideoTranscodeProcessor!'
+    @setStatus 'done'
+    @finish
 
 #TODO don't all of this instiate an instance of the processors? Why aren't doesn't this fail since
 #we don't provide each processor a source file? what exactly does accessing one of these mean?
@@ -169,7 +225,7 @@ class Tika extends Processor
 
 (exports ? this).ThumbnailProcessor = ThumbnailProcessor
 (exports ? this).UploadProcessor = UploadProcessor
- 
+(exports ? this).VideoTranscodeProcessor = VideoTranscodeProcessor
 #helpers
 cleanPath = (str) ->
   if str
