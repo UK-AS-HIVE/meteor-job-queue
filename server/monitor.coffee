@@ -51,6 +51,7 @@ Meteor.startup ->
           claim document
         #if numOfProcessorsRunning == affinity then observer.stop()
     changed: (newDocument, oldDocument) ->
+      return
       if numOfProcessorsRunning < affinity
         id = JobQueue.update {_id: newDocument._id, hostname: ''}, {$set: {hostname: myHostName}}
         if id

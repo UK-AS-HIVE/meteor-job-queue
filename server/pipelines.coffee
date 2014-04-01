@@ -111,8 +111,8 @@ class UploadProcessor extends Processor
     
     #TODO Add file existance checks, etc...
     console.log 'Writing ' + path + @settings.file.name
-
-    mf = CurrentUploads[JSON.stringify(@settings.file)]
+    currentUploadsKey = JSON.stringify(@settings.file)
+    mf = CurrentUploads[currentUploadsKey]
 
     if mf? #why this check? Because in the line above, we grab the mf from current uploads
       ###if mf.size is mf.end
@@ -123,12 +123,13 @@ class UploadProcessor extends Processor
       #mf.save path###
  
       #do while?
-      while mf.end < mf.size
-        mf = CurrentUploads[JSON.stringify(@settings.file)]
-        console.log 'NOT DONE YET'
+      while mf.end <= mf.size #last chunk's end property will be equal to size, right?
+        console.log 'Not done, saving chunk.'
         mf.save path
-        console.log 'Fiber.yield() coming up!'
-        Fiber.yield()
+        console.log 'Chunk saved. Waiting on next chunk...'
+        #Get the new future and wait on it. It will return when their is a new meteor file chunk
+        CurrentUploads[currentUploadsKey]['future'].wait()
+        mf = CurrentUploads[currentUploadsKey]['meteorFile'];
 
       console.log 'Okay, done. mf.size='+mf.size+' mf.end='+mf.end
       console.log 'Written! Scheduling VideoTranscoderProcessor'
