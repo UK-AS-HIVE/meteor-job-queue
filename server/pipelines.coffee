@@ -45,7 +45,8 @@ class Processor
     # remove my ID from any waitingOn fields #because we are finished waiting on me
   
   finish: ->
-    setStatus 'done'
+    #console.log 'DEBUG finish has been called'
+    @setStatus 'done'
     JobQueue.update {waitingOn: @jobQueueId}, {$pull: {waitingOn: @jobQueueId}}
   
   @inputSchema: {}
@@ -82,8 +83,9 @@ class ThumbnailProcessor extends Processor
       thumbnailFuture.return {}
     thumbnailFuture.wait()
     console.log 'finished!'
-    #@setStatus 'done'
-    @finish
+    
+    @finish()
+    return _.pick @settings, file
 
   @outputSchema: new SimpleSchema
     file:
@@ -111,30 +113,28 @@ class UploadProcessor extends Processor
     
     #TODO Add file existance checks, etc...
     console.log 'Writing ' + path + @settings.file.name
-    currentUploadsKey = JSON.stringify(@settings.file)
-    mf = CurrentUploads[currentUploadsKey]
+    currentUploadsKey = JSON.stringify(_.pick(@settings.file, 'name', 'type', 'size'))
+    mf = CurrentUploads[currentUploadsKey]['meteorFile']
 
     if mf? #why this check? Because in the line above, we grab the mf from current uploads
-      ###if mf.size is mf.end
-        #@setStatus 'done'
-        console.log 'about to call schedule job'
-        ScheduleJob 'VideoTranscodeProcessor', [], [], @settings 
-        @finish
-      #mf.save path###
- 
-      #do while?
-      while mf.end <= mf.size #last chunk's end property will be equal to size, right?
+       while mf.end < mf.size #last chunk's end property will be equal to size, right? right, we'll save that chunk after the loop
         console.log 'Not done, saving chunk.'
         mf.save path
         console.log 'Chunk saved. Waiting on next chunk...'
         #Get the new future and wait on it. It will return when their is a new meteor file chunk
         CurrentUploads[currentUploadsKey]['future'].wait()
-        mf = CurrentUploads[currentUploadsKey]['meteorFile'];
+        mf = CurrentUploads[currentUploadsKey]['meteorFile']
+
+      console.log 'Saving last chunk!'
+      mf.save path
 
       console.log 'Okay, done. mf.size='+mf.size+' mf.end='+mf.end
-      console.log 'Written! Scheduling VideoTranscoderProcessor'
-      ScheduleJob 'VideoTranscodeProcessor', [], [], @settings 
+      console.log 'Scheduling VideoTranscoderProcessor'
+      vidSettings = @settings
+      vidSettings['targetType'] = 'blah'
+      ScheduleJob 'VideoTranscodeProcessor', [], [], vidSettings 
 
+    @finish()  
     return _.pick @settings, 'file'
 
   @outputSchema: new SimpleSchema
@@ -199,23 +199,45 @@ class Tika extends Processor
     metadata
 
 class VideoTranscodeProcessor extends Processor
+  
   process: ->
     spawn = Npm.require('child_process').spawn
     Future = Npm.require 'fibers/future'
-    
+    fs = Npm.require 'fs'
+
     ffmpegFuture = new Future() 
     fileName = @settings.file.name
-    ffmpeg = spawn 'ffmpeg', ['-i', fileName, fileName.substr(0, fileName.indexOf('.'))  + '.avi']
+    targetType = @settings.targetType
+    outputTypes = ['avi'] #TODO figure out better way to attatch this to class (prototype, right?)
+    if targetType not in outputTypes
+      console.log 'VideoTranscodeProcessor: targetType not supported. Defaulting to avi'
+      targetType = 'avi'
+    ffmpeg = spawn 'ffmpeg', ['-i', fileName, fileName.substr(0, fileName.indexOf('.'))  + '.' + @settings.targetType]
     ffmpeg.on 'close', (code, signal) ->
       try
         console.log 'Video transcoding successful!'
         ffmpegFuture.return {}
       catch e
         console.log 'Error during video transcoding.'
-    ffmpeg.wait()
+        ffmpegFuture.return {} #TODO different return for error?
+    ffmpegFuture.wait()
     console.log 'Finished with this VideoTranscodeProcessor!'
-    @setStatus 'done'
-    @finish
+
+    @finish()
+    return _.pick @settings, 'file' #TODO this is the input file. not good for output schema
+
+  @outputSchema: new SimpleSchema
+    file:
+      type: Object
+    'file.name':
+      type: String
+    'file.type':
+      type: String
+      #allowedValues: ['avi'] #TODO this should really be tethered to outputTypes somehow
+    'file.size':
+      type: Number
+
+
 
 #TODO don't all of this instiate an instance of the processors? Why aren't doesn't this fail since
 #we don't provide each processor a source file? what exactly does accessing one of these mean?

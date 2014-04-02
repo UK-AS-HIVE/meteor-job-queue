@@ -3,19 +3,18 @@ console.log process.env
 port = parseInt (if process.env.hasOwnProperty 'ROOT_URL' then process.env['ROOT_URL'].replace /[^0-9]/g, '' else process.env['PORT'])
 affinity = if port >= 4000 then 2 else 0
 myHostName = process.env['HOSTNAME'] + ':' + port #process.pid #"test-computer-host-name"
-window = this
+global = this
 
 (exports ? this).CurrentUploads = {}
 
 claim = (job) ->
   Fiber = Npm.require 'fibers'
-  fiber = new Fiber ->
-    #job = JobQueue.findOne {_id: id, hostname: myHostName}
+  fiber = new Fiber -> 
     id = job._id
     console.log '*** Claiming a job: ' + job.settings.file.name
     console.log job
-    #parse the object and creat an appropriate processor
-    processorClass = window[job.processor] 
+
+    processorClass = global[job.processor] 
     processor = new processorClass(id, job.settings)
     console.log processor
     numOfProcessorsRunning++
@@ -24,14 +23,16 @@ claim = (job) ->
      
     try
       output = processor.process()
-      if not processorClass.outputSchema.namedContext('processorOutput').validate output
+      context = processorClass.outputSchema.namedContext('processorOutput')
+      if not context.validate output
         console.log 'Processor output failed schema validation for job ' + id
+        console.log context.invalidKeys()
     catch error
       console.log error
       JobQueue.update {_id: id}, {$set: {status: 'error'}}
     finally
       numOfProcessorsRunning--
-      console.log 'CURRENTLY COMPUTING: ' + numOfProcessorsRunning
+      console.log 'Job Completed. CURRENTLY COMPUTING: ' + numOfProcessorsRunning
   fiber.run()
 
 Meteor.startup ->
@@ -50,6 +51,8 @@ Meteor.startup ->
           #document = JobQueue.findOne {_id: document._id}
           claim document
         #if numOfProcessorsRunning == affinity then observer.stop()
+      else
+        console.log "Could not accept job!"
     changed: (newDocument, oldDocument) ->
       return
       if numOfProcessorsRunning < affinity

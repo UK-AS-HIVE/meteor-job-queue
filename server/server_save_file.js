@@ -5,15 +5,15 @@
 
 Meteor.methods({
   meteorFileUpload: function(mf) {
-    console.log('Upload request made from client: ' + mf.name +': ' + mf.uploadProgress +'% done. This does not mean that we are actually uploading the file, this is simply the chunk we have been handed');
+    console.log('Upload request made from client: ' + mf.name +': ' + mf.uploadProgress +'% done.');
 
     thisJob = JobQueue.find({
       "settings.file.name": mf.name,
       processor: 'UploadProcessor'
     });
+    var exists = thisJob.count() > 0;
 
-    //TODO it looks like a collection of existing processors may be useful. This could be bent to support our need for continuation (
-    // Let's just hang on to the important aspects. This is for putting into CurrentUploads so we can find it and start it again. 
+    //Helps for putting into database
     serializableMeteorFile = _.pick(mf, 'name', 'type', 'size');
     //serializableFile = _.omit(mf, 'data');  // For some reason, _.pick works but _.omit does not
     
@@ -22,24 +22,24 @@ Meteor.methods({
     var newFuture = new Future();
     var currentUploadsKey = JSON.stringify(serializableMeteorFile);
     //Get a handle for our old future, if one exists
-    if (thisJob.count() > 0)
+    if (exists)
       var oldFuture = CurrentUploads[currentUploadsKey]['future'];
     CurrentUploads[currentUploadsKey] = 
       {'meteorFile': mf,
        'future': newFuture};
     //Return the old future so the upload processor can stop waiting.
-    if (thisJob.count() > 0)
+    if (exists)
       oldFuture.return();
    
     //TODO: learn how this works.
     //  How does the meteor file upload itself? It handles the actually uploading. We catch the uploaded chunk in this meteorFileUpload meteor method, and give the chunk to a global object.
     //  The upload processor simply takes the chunk from this global object when we return the appropriate future! 
-    if (thisJob.count() > 0) //this shouldn't ever happen. We should improve the querey for thisJob
+    if (exists) 
     { 
       //If we already have this job on the queue, then when to update it with our progress.  
       JobQueue.update({'settings.file.name': mf.name, processor: 'UploadProcessor'},
-        {$set: {status: mf.end === mf.size ? 'done' : mf.uploadProgress+'%' }}); //redundant, the processor sets itself to done when it's completed
-      console.log("updating job");
+        {$set: {status: mf.end === mf.size ? 'done' : mf.uploadProgress+'%' }}); //TODO the processors finish command should set to done
+      //console.log("updating job");
     }
     else
     {  
