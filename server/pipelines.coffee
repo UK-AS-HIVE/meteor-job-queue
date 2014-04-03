@@ -119,6 +119,7 @@ class UploadProcessor extends Processor
     if mf? #why this check? Because in the line above, we grab the mf from current uploads
        while mf.end < mf.size #last chunk's end property will be equal to size, right? right, we'll save that chunk after the loop
         console.log 'Not done, saving chunk.'
+        #console.log 'DEBUG path: ' + path
         mf.save path
         console.log 'Chunk saved. Waiting on next chunk...'
         #Get the new future and wait on it. It will return when their is a new meteor file chunk
@@ -135,6 +136,7 @@ class UploadProcessor extends Processor
       ScheduleJob 'VideoTranscodeProcessor', [], [], vidSettings 
 
     @finish()  
+    delete CurrentUploads[currentUploadsKey]    
     return _.pick @settings, 'file'
 
   @outputSchema: new SimpleSchema
@@ -212,7 +214,8 @@ class VideoTranscodeProcessor extends Processor
     if targetType not in outputTypes
       console.log 'VideoTranscodeProcessor: targetType not supported. Defaulting to avi'
       targetType = 'avi'
-    ffmpeg = spawn 'ffmpeg', ['-i', fileName, fileName.substr(0, fileName.indexOf('.'))  + '.' + @settings.targetType]
+    console.log 'Processing about to begin. (Note: if you hang, its possible ffmpeg has asked you if you would like to overwrite the file that already exists, or some other prompt. To fix this, remove all files in you uploads folder before testing.)'
+    ffmpeg = spawn 'ffmpeg', ['-i', fileName, fileName.substr(0, fileName.indexOf('.'))  + '.' + targetType], {cwd:'//home/AD/arst238/meteor-job-queue/uploads/'}
     ffmpeg.on 'close', (code, signal) ->
       try
         console.log 'Video transcoding successful!'

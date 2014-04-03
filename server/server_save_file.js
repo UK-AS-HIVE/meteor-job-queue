@@ -2,7 +2,7 @@
  * TODO support other encodings:
  * http://stackoverflow.com/questions/7329128/how-to-write-binary-data-to-a-file-using-node-js
  */
-
+var Future = Npm.require('fibers/future');
 Meteor.methods({
   meteorFileUpload: function(mf) {
     console.log('Upload request made from client: ' + mf.name +': ' + mf.uploadProgress +'% done.');
@@ -18,7 +18,6 @@ Meteor.methods({
     //serializableFile = _.omit(mf, 'data');  // For some reason, _.pick works but _.omit does not
     
     //Create a new future for the UploadProcessor to wait on. We'll return it when we get the next chunk in.
-    var Future = Npm.require('fibers/future');
     var newFuture = new Future();
     var currentUploadsKey = JSON.stringify(serializableMeteorFile);
     //Get a handle for our old future, if one exists
