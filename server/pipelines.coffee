@@ -214,7 +214,6 @@ class VideoTranscodeProcessor extends Processor
     if targetType not in outputTypes
       console.log 'VideoTranscodeProcessor: targetType not supported. Defaulting to avi'
       targetType = 'avi'
-    console.log 'Processing about to begin. (Note: if you hang, its possible ffmpeg has asked you if you would like to overwrite the file that already exists, or some other prompt. To fix this, remove all files in you uploads folder before testing.)'
     ffmpeg = spawn 'ffmpeg', ['-i', fileName, fileName.substr(0, fileName.indexOf('.'))  + '.' + targetType], {cwd:'//home/AD/arst238/meteor-job-queue/uploads/'}
     ffmpeg.on 'close', (code, signal) ->
       try
