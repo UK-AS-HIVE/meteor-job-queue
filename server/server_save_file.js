@@ -5,6 +5,7 @@
 var Future = Npm.require('fibers/future');
 Meteor.methods({
   meteorFileUpload: function(mf) {
+    this.unblock();
     console.log('Upload request made from client: ' + mf.name +': ' + mf.uploadProgress +'% done.');
 
     thisJob = JobQueue.find({

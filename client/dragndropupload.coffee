@@ -13,6 +13,14 @@ doc.ondrop = (e) ->
   @className = ''
   console.log e.dataTransfer.files[0]
   
+  #TODO refactor, right now we get 3 calls to MeteorFile.upload for each file if uploaded in a group of 3
+  for file in e.dataTransfer.files
+    mf = new MeteorFile.upload file, 'meteorFileUpload', {}, ->
+      console.log 'callback meteorFileUpload'
+      console.log arguments
+
+  return false
+###
   for item in e.dataTransfer.items
     entry = item.webkitGetAsEntry()
     if entry
@@ -22,6 +30,8 @@ doc.ondrop = (e) ->
         console.log files
 
         for file in files
+          #mfClient = MeteorFile(file)
+          console.log '**************CALL TO METEORFILE UPLOAD FROM CLIENT***************'
           MeteorFile.upload file, 'meteorFileUpload', {}, ->
             console.log 'callback meteorFileUpload'
             console.log arguments
@@ -44,5 +54,4 @@ doc.ondrop = (e) ->
             item.createReader().readEntries (entries) ->
               traverse entry, path + item.name + '/' for entry in entries
         traverse entry, ''
-
-  false
+###
