@@ -1,7 +1,7 @@
 Fiber = Npm.require 'fibers'
 
 ScheduleJobPipeline = (pipeline) ->
-  #[{processorType: processorType, settings: settings],
+  #[{processorType: processorType, settings: settings}],
   #[[processorType, settings],[processorType, settings]...],
   #...]
   #TODO validate pipeline with schemas
@@ -130,10 +130,12 @@ class UploadProcessor extends Processor
       mf.save path
 
       console.log 'Okay, done. mf.size='+mf.size+' mf.end='+mf.end
-      console.log 'Scheduling VideoTranscoderProcessor'
-      vidSettings = @settings
-      vidSettings['targetType'] = 'blah'
+      console.log 'Scheduling VideoTranscoderProcessor and Tikas'
+      vidSettings = @settings #this works by reference, I wanted to copy
+      vidSettings['targetType'] = 'blah' 
       ScheduleJob 'VideoTranscodeProcessor', [], [], vidSettings 
+      ScheduleJob 'Tika', [], [], @settings
+      ScheduleJob 'Md5FileProcessor', [], [], @settings
 
     @finish()  
     delete CurrentUploads[currentUploadsKey]    
@@ -153,10 +155,11 @@ class Md5FileProcessor extends Processor
   process: ->
     fs = Npm.require 'fs'
     crypto = Npm.require 'crypto'
+    f = @settings.file.name
 
     console.log 'computing md5'
 
-    s = fs.ReadStream @sourcefile
+    s = fs.ReadStream './uploads/' + f
     md5sum = crypto.createHash 'md5'
     Future = Npm.require 'fibers/future'
 
@@ -168,25 +171,34 @@ class Md5FileProcessor extends Processor
       md5 = md5sum.digest('hex')
       future.return md5
     md5 = future.wait()
-    console.log 'md5 of ' + @sourcefile + ' is ' + md5
-    return md5
+    console.log 'md5 of ' + f + ' is ' + md5
+    @finish()
+    return {md5: md5}
+
+  @outputSchema: new SimpleSchema
+    md5:
+      type: String
+      regEx: /[a-f0-9]{32}/
+      min: 32
+      max: 32
 
 class Tika extends Processor
   process: ->
     spawn = Npm.require('child_process').spawn
     Future = Npm.require 'fibers/future'
 
-    f = @sourcefile
+    f = @settings.file.name
 
     tikaFuture = new Future() 
 
-    tika = spawn('java', ['-jar', 'tika-app-1.4.jar', '-j', f])
-    tika.stdout.parse_text = ''
+    tika = spawn('java', ['-jar', 'tika-app-1.5.jar', '-j', './uploads/' + f])
+    parse_text = ''
     tika.stdout.on 'data', (data) ->
-      @parse_text += data
+      parse_text += data
+ 
     tika.on 'close', (code, signal) ->
       try
-        metadata = JSON.parse @stdout.parse_text
+        metadata = JSON.parse parse_text
         tikaFuture.return metadata
       catch e
         console.log 'Error parsing metadata for ' + f
@@ -196,9 +208,20 @@ class Tika extends Processor
     metadata = tikaFuture.wait()
 
     console.log 'Got metadata for ' + f + ': ' + metadata['Content-Type']
-    console.log 'Waited for tika process to finish'
-    console.log metadata
-    metadata
+   
+    @finish()
+    return {metadata: metadata}
+
+  #TODO is this a safe output schema?
+  @outputSchema: new SimpleSchema
+    metadata:
+      type: Object
+    'metadata.Content-Type':
+      type: String
+    'metadata.resourceName':
+      type: String
+    'metadata.Content-Length':
+      type: Number
 
 class VideoTranscodeProcessor extends Processor
   
@@ -214,8 +237,8 @@ class VideoTranscodeProcessor extends Processor
     if targetType not in outputTypes
       console.log 'VideoTranscodeProcessor: targetType not supported. Defaulting to avi'
       targetType = 'avi'
-    console.log 'About to start video transcoding. If you hang, its possibly because the ffmpeg is asking you its okay to overwrite. You need to delete the uploads folder in this case.' 
-    ffmpeg = spawn 'ffmpeg', ['-i', fileName, fileName.substr(0, fileName.indexOf('.'))  + '.' + targetType], {cwd:'//home/AD/arst238/meteor-job-queue/uploads/'}
+    console.log 'About to begin processing.'
+    ffmpeg = spawn 'ffmpeg', ['-i', './uploads/' + fileName, './uploads/' + fileName.substr(0, fileName.indexOf('.'))  + '.' + targetType]#, {cwd:'//home/AD/arst238/meteor-job-queue/uploads/'} #TODO fix the cwd hack
     ffmpeg.on 'close', (code, signal) ->
       try
         console.log 'Video transcoding successful!'
@@ -223,6 +246,7 @@ class VideoTranscodeProcessor extends Processor
       catch e
         console.log 'Error during video transcoding.'
         ffmpegFuture.return {} #TODO different return for error?
+    @setStatus 'processing'
     ffmpegFuture.wait()
     console.log 'Finished with this VideoTranscodeProcessor!'
 
@@ -252,6 +276,8 @@ class VideoTranscodeProcessor extends Processor
 (exports ? this).ThumbnailProcessor = ThumbnailProcessor
 (exports ? this).UploadProcessor = UploadProcessor
 (exports ? this).VideoTranscodeProcessor = VideoTranscodeProcessor
+(exports ? this).Tika = Tika
+(exports ? this).Md5FileProcessor = Md5FileProcessor
 #helpers
 cleanPath = (str) ->
   if str

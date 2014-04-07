@@ -58,7 +58,8 @@ Meteor.startup ->
       #console.log Fiber.current
       console.log 'A job was added! Can I take it? Lets see...'
       console.log 'Process load for this node: ' + numOfProcessorsRunning + '/' + affinity
-      if numOfProcessorsRunning < affinity or document.processor is 'UploadProcessor' #did we want compute nodes to upload maybe? I thought we discussed only web nodes, but maybe not
+      if (numOfProcessorsRunning < affinity and document.processor!= 'UploadProcessor') or 
+      (document.processor is 'UploadProcessor' and port < 4000) 
         claim document
         ### console.log 'Attempting to claim job...'
         id = JobQueue.update {_id: document._id, hostname: ''}, {$set: {hostname: myHostName}}
