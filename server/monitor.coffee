@@ -1,7 +1,7 @@
 numOfProcessorsRunning = 0
 console.log process.env
 port = parseInt (if process.env.hasOwnProperty 'ROOT_URL' then process.env['ROOT_URL'].replace /[^0-9]/g, '' else process.env['PORT'])
-affinity = if port >= 4000 then 2 else 0
+affinity = if port >= 4000 then 2 else 0 #TODO rename affinity to something else?
 myHostName = process.env['HOSTNAME'] + ':' + port #process.pid #"test-computer-host-name"
 global = this
 Fiber = Npm.require 'fibers'
@@ -13,8 +13,7 @@ claim = (job) ->
   id = JobQueue.update {_id: job._id, hostname: ''}, {$set: {hostname: myHostName}} 
   if id
     numOfProcessorsRunning++
-    console.log 'Claimed!'
-    #future = new Future()
+    console.log 'Claimed job with ID: ' + job._id
     fiber = Fiber ->
       id = job._id 
       processorClass = global[job.processor] 
@@ -22,7 +21,6 @@ claim = (job) ->
       console.log processor
       output = {}
       #TODO check the to make sure the parentJobs of the processor are completed!
-       
       try
         output = processor.process()
         context = processorClass.outputSchema.namedContext('processorOutput')
@@ -35,48 +33,37 @@ claim = (job) ->
       finally
         numOfProcessorsRunning--
         console.log 'Job Completed. CURRENTLY COMPUTING: ' + numOfProcessorsRunning
-        #TODO recheck jobqueue for jobs to claim
         console.log 'Looking for new jobs...'
-        possibleJob = JobQueue.findOne {hostname: ''} 
-        if possibleJob and affinity > numOfProcessorsRunning
-          #numOfProcessorsRunning++ #do this right away to stop other things from thinking it can take
+        possibleJob = JobQueue.findOne {hostname: ''} #TODO make this work on some kind of schedule, not just find next randomly acceptable job
+        if possibleJob and affinity > numOfProcessorsRunning 
           claim possibleJob
         else
           console.log 'Could not find any new jobs for me.'
     
-    fiber.run() #Warning: non-blocking
-    #future.wait() 
+    fiber.run() #Warning: non-blocking, gets yielded out of 
   else
-    console.log 'Could not accept job. Its possible some other node got it before me.'
+    console.log 'Could not accept pending job with ID: ' + job._id
 
 Meteor.startup ->
   console.log 'myHostName: ' + myHostName
   console.log 'concurrent process limit: ' + affinity
-  cursor = JobQueue.find { hostname: {$in: ['', myHostName]} }#, {fields: ['processor', 'hostname', '_id']} TODO why hostname?
-  observer = cursor.observe #TODO did not catch when I manually inserted to jobqueue from console
+  cursor = JobQueue.find { hostname: {$in: ['', myHostName]}} #TODO why hostname?
+  observer = cursor.observe
     added: (document) ->
-      #console.log Fiber.current
       console.log 'A job was added! Can I take it? Lets see...'
       console.log 'Process load for this node: ' + numOfProcessorsRunning + '/' + affinity
       if (numOfProcessorsRunning < affinity and document.processor!= 'UploadProcessor') or 
       (document.processor is 'UploadProcessor' and port < 4000) 
         claim document
-        ### console.log 'Attempting to claim job...'
-        id = JobQueue.update {_id: document._id, hostname: ''}, {$set: {hostname: myHostName}}
-        if id #ie if the document was succesfully updated to reflect that we have taken it
-          #document = JobQueue.findOne {_id: document._id}
-          claim document
-        #if numOfProcessorsRunning == affinity then observer.stop()###
       else
-        console.log "Could not accept job!"
-    changed: (newDocument, oldDocument) ->
+        console.log "Could not accept added job with ID: " + document._id
+    ###changed: (newDocument, oldDocument) -> #TODO this does nothing. Do we need this? Why?
       return
       if numOfProcessorsRunning < affinity
         id = JobQueue.update {_id: newDocument._id, hostname: ''}, {$set: {hostname: myHostName}}
         if id
-          #newDocument = JobQueue.findOne {_id: document._id}
           claim newDocument
-        #if numOfProcessorsRunning == affinity then observer.stop()
-      console.log "a document on the job queue was changed"
+      console.log "a document on the job queue was changed"###
     removed: (oldDocument) ->
-      console.log "a document was removed from the job queue"
+      console.log "A job has been removed from the Job Queue."
+      #console.log "Job with ID " + oldDocument._id + " has been removed from the Job Queue."

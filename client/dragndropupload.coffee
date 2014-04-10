@@ -15,7 +15,7 @@ doc.ondrop = (e) ->
   
   #TODO refactor, right now we get 3 calls to MeteorFile.upload for each file if uploaded in a group of 3
   for file in e.dataTransfer.files
-    mf = new MeteorFile.upload file, 'meteorFileUpload', {}, ->
+    MeteorFile.upload file, 'meteorFileUpload', {}, ->
       console.log 'callback meteorFileUpload'
       console.log arguments
 
