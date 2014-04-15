@@ -28,7 +28,7 @@ class @UploadProcessor extends @Processor
 
       console.log 'Saving last chunk!'
       mf.save path
-
+      
       console.log 'Scheduling VideoTranscoderProcessor, Tikas, and Md5Gens'
 
       vidSettings = @settings #TODO this works by reference, I wanted to copy. Apparently very i
