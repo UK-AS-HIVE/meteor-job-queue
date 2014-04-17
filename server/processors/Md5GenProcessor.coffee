@@ -1,4 +1,4 @@
-class @Md5GenProcessor extends @Processor
+class Processors.Md5GenProcessor extends Processors.Processor
   process: ->
     fs = Npm.require 'fs'
     crypto = Npm.require 'crypto'
@@ -28,3 +28,5 @@ class @Md5GenProcessor extends @Processor
       regEx: /[a-f0-9]{32}/ #TODO have Noah check this out
       min: 32
       max: 32
+
+#Processors.Md5GenProcessor = Md5GenProcessor

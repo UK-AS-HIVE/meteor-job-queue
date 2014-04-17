@@ -1,4 +1,5 @@
-class @Processor
+@Processors = {}
+class Processors.Processor
   constructor: (@jobQueueId, @settings) ->
     console.log 'New ' + @constructor.name + ':'
     console.log @settings.file

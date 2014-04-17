@@ -1,4 +1,4 @@
-class @TikaProcessor extends @Processor
+class Processors.TikaProcessor extends Processors.Processor
   process: ->
     spawn = Npm.require('child_process').spawn
     Future = Npm.require 'fibers/future'

@@ -1,4 +1,4 @@
-class @UploadProcessor extends @Processor
+class Processors.UploadProcessor extends Processors.Processor
   process: ->
     #Save to disk -- will append as new sections come in
     path = cleanPath path 

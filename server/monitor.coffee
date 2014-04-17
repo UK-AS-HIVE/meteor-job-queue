@@ -16,7 +16,7 @@ claim = (job) ->
     console.log 'Claimed job with ID: ' + job._id
     fiber = Fiber ->
       id = job._id 
-      processorClass = global[job.processor] 
+      processorClass = Processors[job.processor] 
       processor = new processorClass(id, job.settings)
       console.log processor
       output = {}
