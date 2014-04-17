@@ -17,8 +17,9 @@ class @VideoTranscodeProcessor extends @Processor
     ffmpeg = spawn 'ffmpeg', ['-i', './uploads/' + fileName, '-y', './uploads/' + fileName.substr(0, fileName.indexOf('.'))  + '.' + targetType]#, {cwd:'//home/AD/arst238/meteor-job-queue/uploads/'} #TODO fix the cwd hack
 
     processData = ''
+    self = @
 
-    ffmpeg.stderr.on 'data', (data) ->
+    ffmpeg.stderr.on 'data', Meteor.bindEnvironment (data) ->
       processData = processData+data
       if durationInSeconds is null
         dur = processData.match /Duration: (\d{2,}):(\d{2}):(\d{2}).(\d{2,})/
@@ -31,7 +32,7 @@ class @VideoTranscodeProcessor extends @Processor
           currentTime = 3600*parseInt(time[1]) + 60*parseInt(time[2]) + parseFloat(time[3] + '.' + time[4])
           percent = Math.floor(currentTime*100/durationInSeconds)
           processData = ''
-          ffmpegFuture.return {percent: percent}
+          self.setStatus percent + '%'
     ffmpeg.on 'close', (code, signal) ->
       try
         console.log 'Video transcoding successful!'
@@ -40,9 +41,7 @@ class @VideoTranscodeProcessor extends @Processor
         console.log 'Error during video transcoding.'
         ffmpegFuture.return {} #TODO different return for error?
     @setStatus 'processing'
-    while (v = ffmpegFuture.wait()).hasOwnProperty 'percent'
-      @setStatus v.percent + '%'
-      ffmpegFuture = new Future()
+    ffmpegFuture.wait()
     console.log 'Finished with this VideoTranscodeProcessor!'
 
     @finish()
