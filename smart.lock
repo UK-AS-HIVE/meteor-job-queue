@@ -2,13 +2,14 @@
   "meteor": {},
   "dependencies": {
     "basePackages": {
-      "npm": {},
-      "font-awesome": {},
-      "moment": {},
-      "meteor-file": {},
-      "simple-schema": {}
+      "job-queue": {
+        "path": "."
+      }
     },
     "packages": {
+      "job-queue": {
+        "path": "."
+      },
       "npm": {
         "git": "https://github.com/arunoda/meteor-npm.git",
         "tag": "v0.2.6",
@@ -31,8 +32,8 @@
       },
       "simple-schema": {
         "git": "https://github.com/aldeed/meteor-simple-schema.git",
-        "tag": "v0.2.41",
-        "commit": "c269b4e9ddb642cdc733c1f4190bcb7b28099e01"
+        "tag": "v0.2.48",
+        "commit": "1bc4aec5d6189093b8c0efbd32e761946bcd4a5b"
       }
     }
   }

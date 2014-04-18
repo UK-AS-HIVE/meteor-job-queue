@@ -6,7 +6,7 @@ class Processors.VideoTranscodeProcessor extends Processors.Processor
 
     durationInSeconds = null
 
-    ffmpegFuture = new Future() 
+    ffmpegFuture = new Future()
     fileName = @settings.file.name
     targetType = @settings.targetType
     outputTypes = ['avi'] #TODO figure out better way to attatch this to class (prototype, right?)
@@ -19,7 +19,7 @@ class Processors.VideoTranscodeProcessor extends Processors.Processor
     processData = ''
 
     ffmpeg.stderr.on 'data', (data) ->
-      processData = processData+data
+      processData = processData + data
       if durationInSeconds is null
         dur = processData.match /Duration: (\d{2,}):(\d{2}):(\d{2}).(\d{2,})/
         if dur?
@@ -27,26 +27,29 @@ class Processors.VideoTranscodeProcessor extends Processors.Processor
           processData = ''
       else
         time = processData.match /time=(\d{2,}):(\d{2}):(\d{2}).(\d{2,}) bitrate=/
-        if time? && durationInSeconds
+        if time? && durationInSeconds#?
           currentTime = 3600*parseInt(time[1]) + 60*parseInt(time[2]) + parseFloat(time[3] + '.' + time[4])
           percent = Math.floor(currentTime*100/durationInSeconds)
           processData = ''
-          ffmpegFuture.return {percent: percent}
+          @setStatus v.percent + '%'  
+
     ffmpeg.on 'close', (code, signal) ->
       try
         console.log 'Video transcoding successful!'
         ffmpegFuture.return {}
       catch e
         console.log 'Error during video transcoding.'
-        ffmpegFuture.return {} #TODO different return for error?
-    @setStatus 'processing'
-    while (v = ffmpegFuture.wait()).hasOwnProperty 'percent'
-      @setStatus v.percent + '%'
-      ffmpegFuture = new Future()
-    console.log 'Finished with this VideoTranscodeProcessor!'
+        ffmpegFuture.return 1 #TODO different return for error?
 
-    @finish()
-    return _.pick @settings, 'file' #TODO this is the input file. not good for output schema
+    @setStatus 'processing'
+
+    if ffmpegFuture.wait() is 1
+      @setStatus 'error'
+    else
+      console.log 'Finished with this VideoTranscodeProcessor!'
+
+      @finish()
+    return _.pick @settings, 'file' #TODO this is the input file. not good for output schema (always return?)
 
   @outputSchema: new SimpleSchema
     file:
