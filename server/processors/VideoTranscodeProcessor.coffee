@@ -14,15 +14,10 @@ class Processors.VideoTranscodeProcessor extends Processors.Processor
       console.log 'VideoTranscodeProcessor: targetType not supported. Defaulting to avi'
       targetType = 'avi'
     console.log 'About to begin processing.'
-    ffmpeg = spawn 'ffmpeg', ['-i', './uploads/' + fileName, '-y', './uploads/' + fileName.substr(0, fileName.indexOf('.'))  + '.' + targetType]#, {cwd:'//home/AD/arst238/meteor-job-queue/uploads/'} #TODO fix the cwd hack
+    ffmpeg = spawn 'ffmpeg', ['-i', './uploads/' + fileName, '-y', './uploads/' + fileName.substr(0, fileName.indexOf('.'))  + '.' + targetType]
 
     processData = ''
     self = @
-
-
-
-
-
     ffmpeg.stderr.on 'data', Meteor.bindEnvironment (data) ->
       processData = processData+data
       if durationInSeconds is null
@@ -48,15 +43,12 @@ class Processors.VideoTranscodeProcessor extends Processors.Processor
 
     @setStatus 'processing'
 
-    ffmpegFuture.wait()
-    console.log 'Finished with this VideoTranscodeProcessor!'
-
     if ffmpegFuture.wait() is 1
       @setStatus 'error'
     else
       console.log 'Finished with this VideoTranscodeProcessor!'
-
       @finish()
+
     return _.pick @settings, 'file' #TODO this is the input file. not good for output schema (always return?)
 
   @outputSchema: new SimpleSchema

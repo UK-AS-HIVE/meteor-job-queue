@@ -8,6 +8,15 @@ Fiber = Npm.require 'fibers'
 
 (exports ? this).CurrentUploads = {}
 
+findRandomJob = () -> 
+  if affinity > 0
+    possibleJob = JobQueue.findOne {hostname: ''} #TODO make this work on some kind of schedule, not just find next randomly acceptable job
+    if possibleJob and affinity > numOfProcessorsRunning 
+      claim possibleJob
+    else
+      console.log 'Could not find any new jobs for me.'
+
+
 claim = (job) ->
   console.log 'Attempting to claim job...'
   id = JobQueue.update {_id: job._id, hostname: ''}, {$set: {hostname: myHostName}} 
@@ -34,15 +43,11 @@ claim = (job) ->
         numOfProcessorsRunning--
         console.log 'Job Completed. CURRENTLY COMPUTING: ' + numOfProcessorsRunning
         console.log 'Looking for new jobs...'
-        possibleJob = JobQueue.findOne {hostname: ''} #TODO make this work on some kind of schedule, not just find next randomly acceptable job
-        if possibleJob and affinity > numOfProcessorsRunning 
-          claim possibleJob
-        else
-          console.log 'Could not find any new jobs for me.'
-    
+        findRandomJob()  
     fiber.run() #Warning: non-blocking, gets yielded out of 
   else
     console.log 'Could not accept pending job with ID: ' + job._id
+    findRandomJob() #will keep looking for jobs as long as it can find one without a host
 
 Meteor.startup ->
   console.log 'myHostName: ' + myHostName
