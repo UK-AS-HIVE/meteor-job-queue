@@ -25,5 +25,5 @@ Package.on_use(function(api, where) {
 
 Package.on_test(function (api) {
   api.use(["job-queue", "tinytest", "test-helpers", "coffeescript"]); 
-  add_files("tests/job-queue-test.coffee", ["client", "server"]);
+  api.add_files("tests/job-queue-test.coffee", ["client", "server"]);
 });

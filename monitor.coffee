@@ -6,7 +6,7 @@ myHostName = process.env['HOSTNAME'] + ':' + port #process.pid #"test-computer-h
 global = this
 Fiber = Npm.require 'fibers'
 
-(exports ? this).CurrentUploads = {}
+@CurrentUploads = {}
 
 findRandomJob = () -> 
   if affinity > 0

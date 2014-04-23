@@ -2,12 +2,12 @@
   "meteor": {},
   "dependencies": {
     "basePackages": {
-      "job-queue-package": {
+      "job-queue": {
         "path": "."
       }
     },
     "packages": {
-      "job-queue-package": {
+      "job-queue": {
         "path": "."
       },
       "npm": {
