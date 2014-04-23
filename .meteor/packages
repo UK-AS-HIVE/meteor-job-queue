@@ -6,9 +6,9 @@
 standard-app-packages
 autopublish
 insecure
-preserve-inputs
 coffeescript
 meteor-file
 moment
 simple-schema
 npm
+tinytest

@@ -1,5 +1,5 @@
 @Processors = {}
-class Processors.Processor
+class @Processors.Processor
   constructor: (@jobQueueId, @settings) ->
     console.log 'New ' + @constructor.name + ':'
     console.log @settings.file
@@ -22,3 +22,5 @@ class Processors.Processor
   @inputSchema: {}
   
   @outputSchema: {}
+
+Processors = @Processors #we'll export the Processors variable

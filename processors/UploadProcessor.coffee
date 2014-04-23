@@ -1,4 +1,4 @@
-class Processors.UploadProcessor extends Processors.Processor
+class @Processors.UploadProcessor extends @Processors.Processor
   process: ->
     #Save to disk -- will append as new sections come in
     path = cleanPath path 
@@ -40,6 +40,7 @@ class Processors.UploadProcessor extends Processors.Processor
 
     @finish()  
     delete CurrentUploads[currentUploadsKey]    
+    console.log _.pick @settings, 'file'
     return _.pick @settings, 'file'
 
   @outputSchema: new SimpleSchema

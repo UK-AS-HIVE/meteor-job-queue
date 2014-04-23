@@ -2,12 +2,12 @@
   "meteor": {},
   "dependencies": {
     "basePackages": {
-      "job-queue": {
+      "job-queue-package": {
         "path": "."
       }
     },
     "packages": {
-      "job-queue": {
+      "job-queue-package": {
         "path": "."
       },
       "npm": {
@@ -32,8 +32,8 @@
       },
       "simple-schema": {
         "git": "https://github.com/aldeed/meteor-simple-schema.git",
-        "tag": "v0.2.48",
-        "commit": "1bc4aec5d6189093b8c0efbd32e761946bcd4a5b"
+        "tag": "v0.4.0",
+        "commit": "2cc6aac0d35a4e00b065c1437d540b2aefba5241"
       }
     }
   }

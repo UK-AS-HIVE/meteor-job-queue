@@ -1,1 +1,1 @@
-JobQueue = new Meteor.Collection('jobQueue')
+JobQueue = new Meteor.Collection('jobQueue');

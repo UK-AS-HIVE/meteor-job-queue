@@ -2,16 +2,28 @@ Package.describe({
   summary: "Provides basic job queue and task scheduling functionality."
 });
 
-Package.on_use(function(api) {
-  api.use('coffeescript', ['client', 'server']);
-  //api.use('spacebars', 'client');
-  api.add_files(['server/monitor.coffee', 'server/pipelines.coffee', 'server/server.coffee', 'server/server_save_file.coffee','server/processors/Md5GenProcessor.coffee', 'server/processors/ThumbnailProcessor.coffee', 'server/processors/TikaProcessor.coffee', 'server/processors/UploadProcessor.coffee', 'server/processors/VideoTranscodeProcessor.coffee', 'server/processors/base/Processor.coffee'], 'server');
-  api.add_files(['client/client.coffee', 'client/dragndropupload.coffee'], 'client');
+Package.on_use(function(api, where) {
+  api.use(['coffeescript', 'font-awesome'], ['client', 'server']);
+  api.imply('meteor-file', ['client', 'server']); //for upload processor only...
+  api.use(['simple-schema', 'npm'], 'server');
+  api.use('handlebars', 'client');
+  api.add_files('collections.js', ['client', 'server'])
+  api.add_files([
+    'processors/base/Processor.coffee',
+    'monitor.coffee', 
+    'pipelines.coffee', 
+    'UploadProcessorCallback.coffee', 
+    'processors/Md5GenProcessor.coffee', 
+    'processors/ThumbnailProcessor.coffee', 
+    'processors/TikaProcessor.coffee', 
+    'processors/UploadProcessor.coffee', 
+    'processors/VideoTranscodeProcessor.coffee'], 
+    'server');
 
-  api.export(['JobQueue', 'Processors'], ['client', 'server']);
+  api.export(['Processors', 'JobQueue'], ['client', 'server']);
 });
 
 Package.on_test(function (api) {
-  api.use(["meteor-job-queue", "tinytest", "test-helpers"]);
-  api.add_files("job-queue-test.coffee", ["client", "server"]);
+  api.use(["job-queue-package", "tinytest", "test-helpers", "coffeescript"]); 
+  add_files("tests/job-queue-test.coffee", ["client", "server"]);
 });

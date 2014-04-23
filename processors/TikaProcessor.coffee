@@ -1,4 +1,4 @@
-class Processors.TikaProcessor extends Processors.Processor
+class @Processors.TikaProcessor extends @Processors.Processor
   process: ->
     fs = Npm.require('fs')
     spawn = Npm.require('child_process').spawn

@@ -1,4 +1,4 @@
-class Processors.ThumbnailProcessor extends Processors.Processor
+class @Processors.ThumbnailProcessor extends @Processors.Processor
   process: ->
     ###TODO some thoughts: do we want this to determine automatically how to make the thumbnail?
     # I would think so. I like the idea of simply running this and it can determine what kind of

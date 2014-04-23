@@ -1,4 +1,4 @@
-class Processors.VideoTranscodeProcessor extends Processors.Processor  
+class @Processors.VideoTranscodeProcessor extends @Processors.Processor  
   process: ->
     spawn = Npm.require('child_process').spawn
     Future = Npm.require 'fibers/future'

@@ -1,4 +1,4 @@
-class Processors.Md5GenProcessor extends Processors.Processor
+class @Processors.Md5GenProcessor extends @Processors.Processor
   process: ->
     fs = Npm.require 'fs'
     crypto = Npm.require 'crypto'

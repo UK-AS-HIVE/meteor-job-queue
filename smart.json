@@ -1,5 +1,5 @@
 {
-  "name": "job-queue",
+  "name": "job-queue-package",
   "description": "Provides basic job queue and task scheduling functionality.",
   "packages": {
     "npm": {},
