@@ -18,15 +18,15 @@ class @Processors.UploadProcessor extends @Processors.Processor
                               #save that chunk after the loop.
                               #TODO this implies we never wait on the last future, which is true.
                               #     worth avoiding trying to instantiate it?
-        console.log 'Not done, saving chunk.'
+        #console.log 'Not done, saving chunk.'
         mf.save path
-        console.log 'Chunk saved. Waiting on next chunk...'
+        #console.log 'Chunk saved. Waiting on next chunk...'
         @setStatus mf.uploadProgress + '%'  
         #Get the new future and wait on it. It will return when their is a new meteor file chunk
         CurrentUploads[currentUploadsKey]['future'].wait()
         mf = CurrentUploads[currentUploadsKey]['meteorFile']
 
-      console.log 'Saving last chunk!'
+      #console.log 'Saving last chunk!'
       mf.save path
 
     @finish()  

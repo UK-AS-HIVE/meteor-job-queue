@@ -2,9 +2,9 @@
 class @Processors.Processor
   constructor: (@jobQueueId, @settings) ->
     console.log 'New ' + @constructor.name + ':' #TODO outputs New Object. expected?
-    console.log @settings
+    #console.log @settings
     processor = this
-    processorType = @constructor.name
+    #processorType = @constructor.name
 
   process: ->
     return 'Long running process' #had returning 0, but apparently was returning false? or maybe

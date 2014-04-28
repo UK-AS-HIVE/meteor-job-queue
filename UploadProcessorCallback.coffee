@@ -6,7 +6,7 @@ Future = Npm.require('fibers/future')
 Meteor.methods
   meteorFileUpload: (mf) ->
     @unblock() #I'm not confident this does anything
-    console.log 'Upload request made from client: ' + mf.name + ': ' + mf.uploadProgress + '%'
+    #console.log 'Upload request made from client: ' + mf.name + ': ' + mf.uploadProgress + '%'
 
     ###TODO Find by ID somehow. Another thing that might work would be checking the CurrentUploads
     object (it's global) for the serializeable file (we use that as the key on the CurrentUploads

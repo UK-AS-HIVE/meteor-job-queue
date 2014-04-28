@@ -18,7 +18,6 @@ Fiber = Npm.require 'fibers'
     parents = currentPipePartIds
       
 @ScheduleJob = (processorType, parents, waitingOn, settings) -> #TODO exports?
-  console.log 'ScheduleJob has been called!'
   JobQueue.insert
     processor: processorType
     parents: parents

@@ -15,16 +15,16 @@ findRandomJob = () ->
     if possibleJob
       attemptClaim possibleJob._id
     else
-      console.log "Just finished a job, but it doesn't look like theres any others for me."
+      #console.log "Just finished a job, but it doesn't look like theres any others for me."
 
 attemptClaim = (id) ->
   document = JobQueue.findOne {_id: id}
   #console.log document
   if (numOfProcessorsRunning < affinity and document.processor != 'UploadProcessor') or (document.processor is 'UploadProcessor' and port < 4000) 
-    console.log "Job looks acceptable. Trying to claim a " + document.processor
+    #console.log "Job looks acceptable. Trying to claim a " + document.processor
     claim id
   else
-    console.log "Could not accept added job with ID: " + id + ". I'm working too hard!"
+    #console.log "Could not accept added job with ID: " + id + ". I'm working too hard!"
 
 claim = (id) ->
   console.log 'Attempting to claim job...'
@@ -49,8 +49,8 @@ claim = (id) ->
         JobQueue.update {_id: id}, {$set: {status: 'error'}}
       finally
         numOfProcessorsRunning--
-        console.log 'Job Completed. CURRENTLY COMPUTING: ' + numOfProcessorsRunning
-        console.log 'Looking for new jobs...'
+        #console.log 'Job Completed. CURRENTLY COMPUTING: ' + numOfProcessorsRunning
+        #console.log 'Looking for new jobs...'
         findRandomJob()  
     fiber.run() #Warning: non-blocking, gets yielded out of 
   else
@@ -73,11 +73,11 @@ Meteor.startup ->
     added: (id, fields) ->
       console.log 'Added: ' + id
       #console.log 'A job was added! Can I take it? Lets see...'
-      console.log 'Process load for this node: ' + numOfProcessorsRunning + '/' + affinity
+      #console.log 'Process load for this node: ' + numOfProcessorsRunning + '/' + affinity
       if fields.waitingOn.length is 0
         attemptClaim id
       else
-        console.log 'The job is still waiting on some others to finish!'
+        #console.log 'The job is still waiting on some others to finish!'
   
   
   ###cursor = JobQueue.find { hostname: {$in: ['', myHostName]}} #TODO why hostname?
