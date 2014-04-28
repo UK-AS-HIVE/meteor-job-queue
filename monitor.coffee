@@ -7,29 +7,37 @@ global = this
 Fiber = Npm.require 'fibers'
 
 @CurrentUploads = {}
+ReadyAndWaiting = []
 
 findRandomJob = () -> 
   if affinity > 0
-    possibleJob = JobQueue.findOne {hostname: ''} #TODO make this work on some kind of schedule, not just find next randomly acceptable job
-    if possibleJob and affinity > numOfProcessorsRunning 
-      claim possibleJob
+    possibleJob = JobQueue.findOne {hostname: '', waitingOn: {$size: 0}} #TODO make this work on some kind of schedule, not just find next randomly acceptable job
+    if possibleJob
+      attemptClaim possibleJob._id
     else
-      console.log 'Could not find any new jobs for me.'
+      console.log "Just finished a job, but it doesn't look like theres any others for me."
 
+attemptClaim = (id) ->
+  document = JobQueue.findOne {_id: id}
+  #console.log document
+  if (numOfProcessorsRunning < affinity and document.processor != 'UploadProcessor') or (document.processor is 'UploadProcessor' and port < 4000) 
+    console.log "Job looks acceptable. Trying to claim a " + document.processor
+    claim id
+  else
+    console.log "Could not accept added job with ID: " + id + ". I'm working too hard!"
 
-claim = (job) ->
+claim = (id) ->
   console.log 'Attempting to claim job...'
-  id = JobQueue.update {_id: job._id, hostname: ''}, {$set: {hostname: myHostName}} 
-  if id
+  numChanged = JobQueue.update {_id: id, hostname: ''}, {$set: {hostname: myHostName}}  
+  if numChanged > 0
+    job = JobQueue.findOne {_id: id} 
     numOfProcessorsRunning++
     console.log 'Claimed job with ID: ' + job._id
-    fiber = Fiber ->
-      id = job._id 
+    fiber = Fiber -> 
       processorClass = Processors[job.processor] 
       processor = new processorClass(id, job.settings)
       console.log processor
       output = {}
-      #TODO check the to make sure the parentJobs of the processor are completed!
       try
         output = processor.process()
         context = processorClass.outputSchema.namedContext('processorOutput')
@@ -46,29 +54,38 @@ claim = (job) ->
         findRandomJob()  
     fiber.run() #Warning: non-blocking, gets yielded out of 
   else
-    console.log 'Could not accept pending job with ID: ' + job._id
+    console.log 'Could not accept pending job with ID: ' + id + '. Looking for new job.'
     findRandomJob() #will keep looking for jobs as long as it can find one without a host
 
 Meteor.startup ->
   console.log 'myHostName: ' + myHostName
   console.log 'concurrent process limit: ' + affinity
-  cursor = JobQueue.find { hostname: {$in: ['', myHostName]}} #TODO why hostname?
+
+  statusPendingCursor = JobQueue.find {status: 'pending'}
+  statusPendingCursor.observeChanges
+    changed: (id, fields) -> 
+      if fields.hasOwnProperty('waitingOn')
+        if fields.waitingOn.length is 0
+          attemptClaim id
+  
+  noHostCursor = JobQueue.find {hostname: ''}
+  noHostCursor.observeChanges
+    added: (id, fields) ->
+      console.log 'Added: ' + id
+      #console.log 'A job was added! Can I take it? Lets see...'
+      console.log 'Process load for this node: ' + numOfProcessorsRunning + '/' + affinity
+      if fields.waitingOn.length is 0
+        attemptClaim id
+      else
+        console.log 'The job is still waiting on some others to finish!'
+  
+  
+  ###cursor = JobQueue.find { hostname: {$in: ['', myHostName]}} #TODO why hostname?
   observer = cursor.observe
     added: (document) ->
       console.log 'A job was added! Can I take it? Lets see...'
       console.log 'Process load for this node: ' + numOfProcessorsRunning + '/' + affinity
-      if (numOfProcessorsRunning < affinity and document.processor!= 'UploadProcessor') or 
-      (document.processor is 'UploadProcessor' and port < 4000) 
-        claim document
-      else
-        console.log "Could not accept added job with ID: " + document._id
-    ###changed: (newDocument, oldDocument) -> #TODO this does nothing. Do we need this? Why?
-      return
-      if numOfProcessorsRunning < affinity
-        id = JobQueue.update {_id: newDocument._id, hostname: ''}, {$set: {hostname: myHostName}}
-        if id
-          claim newDocument
-      console.log "a document on the job queue was changed"###
+      if document.waitingOn.length == 0 #wrap in another function?
+        attemptClaim document
     removed: (oldDocument) ->
-      console.log "A job has been removed from the Job Queue."
-      #console.log "Job with ID " + oldDocument._id + " has been removed from the Job Queue."
+      console.log "A job has been removed from the Job Queue."###

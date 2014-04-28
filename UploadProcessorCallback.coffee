@@ -2,7 +2,6 @@
   TODO support other encodings:
   http://stackoverflow.com/questions/7329128/how-to-write-binary-data-to-a-file-using-node-js
 ###
-#
 Future = Npm.require('fibers/future')
 Meteor.methods
   meteorFileUpload: (mf) ->
@@ -29,15 +28,20 @@ Meteor.methods
 
     if exists
       oldFuture = CurrentUploads[currentUploadsKey]['future']
+
     CurrentUploads[currentUploadsKey] = 
       'meteorFile': mf,
       'future': newFuture
+
     if exists
       oldFuture.return() 
     else  
       #TODO affiliate jobId with the processor (this probably needs to actuall happen in claim)
-      jobId = ScheduleJob 'UploadProcessor', [], [], {file: serializableMeteorFile}
-
+      jobId = ScheduleJobPipeline [
+        [{processorType: 'UploadProcessor', settings: {file: serializableMeteorFile}}],
+        [{processorType: 'TikaProcessor', settings: {file: serializableMeteorFile}}, {processorType: 'VideoTranscodeProcessor', settings: {file: serializableMeteorFile, targetType: 'blah'}}],
+        [{processorType: 'Md5GenProcessor', settings: {file: serializableMeteorFile}}]]
+        
 Meteor.startup () ->
   cwd = process.cwd()
   console.log cwd

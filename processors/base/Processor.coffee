@@ -18,7 +18,7 @@ class @Processors.Processor
   finish: ->
     #console.log 'DEBUG finish has been called'
     @setStatus 'done'
-    JobQueue.update {waitingOn: @jobQueueId}, {$pull: {waitingOn: @jobQueueId}}
+    JobQueue.update {waitingOn: @jobQueueId}, {$pull: {waitingOn: @jobQueueId}}, {multi: true}
   
   @inputSchema: {}
   

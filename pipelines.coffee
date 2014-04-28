@@ -1,6 +1,6 @@
 Fiber = Npm.require 'fibers'
 
-ScheduleJobPipeline = (pipeline) ->
+@ScheduleJobPipeline = (pipeline) ->
   #[{processorType: processorType, settings: settings}],
   #[[processorType, settings],[processorType, settings]...],
   #...]
@@ -13,7 +13,8 @@ ScheduleJobPipeline = (pipeline) ->
   for pipePart in pipeline
     currentPipePartIds = []
     for job in pipePart
-      currentPipePartIds.push ScheduleJob job.processorType, parents, parents, job.settings #non-obvious, but the second parents arguments is because we are still waitingOn them
+      jobId = ScheduleJob job.processorType, parents, parents, job.settings
+      currentPipePartIds.push jobId #non-obvious, but the second parents arguments is because we are still waitingOn them
     parents = currentPipePartIds
       
 @ScheduleJob = (processorType, parents, waitingOn, settings) -> #TODO exports?

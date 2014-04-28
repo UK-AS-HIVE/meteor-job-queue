@@ -28,15 +28,6 @@ class @Processors.UploadProcessor extends @Processors.Processor
 
       console.log 'Saving last chunk!'
       mf.save path
-      
-      console.log 'Scheduling VideoTranscoderProcessor, Tikas, and Md5Gens'
-
-      vidSettings = @settings #TODO this works by reference, I wanted to copy. Apparently very i
-                              #difficult
-      vidSettings['targetType'] = 'blah' 
-      ScheduleJob 'VideoTranscodeProcessor', [], [], vidSettings 
-      ScheduleJob 'TikaProcessor', [], [], @settings
-      ScheduleJob 'Md5GenProcessor', [], [], @settings
 
     @finish()  
     delete CurrentUploads[currentUploadsKey]    

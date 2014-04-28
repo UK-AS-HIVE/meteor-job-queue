@@ -1,5 +1,6 @@
 class @Processors.TikaProcessor extends @Processors.Processor
   process: ->
+    @setStatus 'processing'
     fs = Npm.require('fs')
     spawn = Npm.require('child_process').spawn
     Future = Npm.require 'fibers/future'
