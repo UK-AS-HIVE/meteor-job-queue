@@ -15,19 +15,14 @@ class @Processors.ThumbnailProcessor extends @Processors.Processor
     # take in a file, run tika, and decide how to best proceed. I kind of like that idea, and think
     # it would could be expanded to work well with other processors
     ###
+    @setStatus 'processing'
     Future = Npm.require 'fibers/future'
     im = Meteor.require 'imagemagick'
     f = @settings.file.name
-    console.log "here I am: " + process.cwd() #TODO doesn't print where i am
-    md5 = 'this_is_not_an_md5' #TODO does this need an md5?
     thumbnailFuture = new Future()
     im.convert ['uploads/' + f, '-resize', '64x64', './uploads/thumbnail_'+f+'.jpg'], -> #TODO don't use f
-      console.log @
-      console.log arguments
-      console.log 'generated thumbnail for ' + f
       thumbnailFuture.return {}
     thumbnailFuture.wait()
-    console.log 'finished!'
     
     @finish()
     return _.pick @settings, file

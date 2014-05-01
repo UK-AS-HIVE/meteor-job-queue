@@ -10,6 +10,7 @@ Package.on_use(function(api, where) {
   api.add_files('collections.js', ['client', 'server'])
   api.add_files([
     'processors/base/Processor.coffee',
+    'startup.coffee',
     'monitor.coffee', 
     'pipelines.coffee', 
     'UploadProcessorCallback.coffee', 
@@ -20,7 +21,7 @@ Package.on_use(function(api, where) {
     'processors/VideoTranscodeProcessor.coffee'], 
     'server');
 
-  api.export(['Processors', 'JobQueue'], ['client', 'server']);
+  api.export(['Processors', 'JobQueue', 'Scheduler'], ['client', 'server']);
 });
 
 Package.on_test(function (api) {

@@ -6,7 +6,6 @@ Future = Npm.require('fibers/future')
 Meteor.methods
   meteorFileUpload: (mf) ->
     @unblock() #I'm not confident this does anything
-    #console.log 'Upload request made from client: ' + mf.name + ': ' + mf.uploadProgress + '%'
 
     ###TODO Find by ID somehow. Another thing that might work would be checking the CurrentUploads
     object (it's global) for the serializeable file (we use that as the key on the CurrentUploads
@@ -41,11 +40,3 @@ Meteor.methods
         [{processorType: 'UploadProcessor', settings: {file: serializableMeteorFile}}],
         [{processorType: 'TikaProcessor', settings: {file: serializableMeteorFile}}, {processorType: 'VideoTranscodeProcessor', settings: {file: serializableMeteorFile, targetType: 'blah'}}],
         [{processorType: 'Md5GenProcessor', settings: {file: serializableMeteorFile}}]]
-        
-Meteor.startup () ->
-  cwd = process.cwd()
-  console.log cwd
-  if cwd.indexOf '.meteor' is not -1
-    console.log 'Running unbundled, moving out of .meteor dir'
-    process.chdir '../../../../..'
-  console.log 'cwd: ' + process.cwd()

@@ -1,9 +1,9 @@
 @Processors = {}
 class @Processors.Processor
   constructor: (@jobQueueId, @settings) ->
-    console.log 'New ' + @constructor.name + ':' #TODO outputs New Object. expected?
+    console.log 'New ' + @constructor.name + ' constructed' 
     #console.log @settings
-    processor = this
+    #processor = this
     #processorType = @constructor.name
 
   process: ->
@@ -18,7 +18,7 @@ class @Processors.Processor
   finish: ->
     #console.log 'DEBUG finish has been called'
     @setStatus 'done'
-    JobQueue.update {waitingOn: @jobQueueId}, {$pull: {waitingOn: @jobQueueId}}, {multi: true}
+    #JobQueue.update {waitingOn: @jobQueueId}, {$pull: {waitingOn: @jobQueueId}}, {multi: true}
   
   @inputSchema: {}
   

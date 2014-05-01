@@ -1,5 +1,6 @@
 class @Processors.Md5GenProcessor extends @Processors.Processor
   process: ->
+    @setStatus 'processing'
     fs = Npm.require 'fs'
     crypto = Npm.require 'crypto'
     f = @settings.file.name
@@ -28,5 +29,3 @@ class @Processors.Md5GenProcessor extends @Processors.Processor
       regEx: /[a-f0-9]{32}/ #TODO have Noah check this out
       min: 32
       max: 32
-
-#Processors.Md5GenProcessor = Md5GenProcessor
