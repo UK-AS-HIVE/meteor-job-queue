@@ -40,7 +40,9 @@ claim = (id) ->
     console.log 'Claimed job with ID: ' + job._id
     fiber = Fiber -> 
       processorClass = Processors[job.processor] 
-      processor = new processorClass(id, job.settings)
+      if processorClass is undefined
+        console.log "Couldn't find the processor " + job.processor + ". Did you make a typo?"
+      processor = new processorClass(id, job.settings, job.parents)
       output = {}
       try
         output = processor.process()
@@ -50,13 +52,8 @@ claim = (id) ->
           console.log context.invalidKeys()
           JobQueue.update {_id: id}, {$set: {status: 'failed validation'}}
         else
-          updateModifier = 
-            $pull: 
-              waitingOn: id 
-            $push: 
-              inheritance: 
-                output
-          JobQueue.update {waitingOn: id}, updateModifier, {multi: true}
+          JobQueue.update {_id: id} , {$set: {output: output}}
+          JobQueue.update {waitingOn: id},{$pull: {waitingOn: id}}, {multi: true}
 
       catch error
         console.log 'ERROR: ' + error

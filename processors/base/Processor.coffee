@@ -1,6 +1,6 @@
 @Processors = {}
 class @Processors.Processor
-  constructor: (@jobQueueId, @settings) ->
+  constructor: (@jobQueueId, @settings, @parents) ->
     console.log 'New ' + @constructor.name + ' constructed' 
     #console.log @settings
     #processor = this
