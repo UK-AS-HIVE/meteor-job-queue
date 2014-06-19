@@ -6,7 +6,7 @@ Package.on_use(function(api, where) {
   api.use(['coffeescript', 'font-awesome'], ['client', 'server']);
   api.imply('meteor-file', ['client', 'server']); //for upload processor only...
   api.use(['simple-schema', 'npm'], 'server');
-  api.use('handlebars', 'client');
+  api.use(['spacebars', 'ui'], 'client');
   api.add_files('collections.js', ['client', 'server'])
   api.add_files([
     'processors/base/Processor.coffee',

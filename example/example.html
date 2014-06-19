@@ -1,0 +1,26 @@
+<head>
+  <title>example</title>
+</head>
+
+<body>
+  <button id="add-job">Add job</button>
+  <button id="add-hundred-jobs">Add 100 jobs</button>
+  <button id="clear-jobs">Clear jobs</button>
+  {{> queue}}
+</body>
+
+<template name="queue">
+  <table>
+    <tbody>
+      {{#each job}}
+        <tr>
+          <td>{{_id}}</td>
+          <td>{{processor}}</td>
+          <td>{{status}}</td>
+          <td>{{hostname}}</td>
+          <td>{{inspect settings}}</td>
+        </tr>
+      {{/each}}
+    </tbody>
+  </table>
+</template>

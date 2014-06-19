@@ -6,9 +6,4 @@
 standard-app-packages
 autopublish
 insecure
-coffeescript
-meteor-file
-moment
-simple-schema
-npm
-tinytest
+job-queue

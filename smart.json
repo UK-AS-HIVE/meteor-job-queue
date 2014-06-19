@@ -5,7 +5,9 @@
     "npm": {},
     "font-awesome": {},
     "moment": {},
-    "meteor-file": {},
+    "meteor-file": {
+      "git": "git://github.com/lindleycb/meteor-file"
+    },
     "simple-schema": {}
   }
 }

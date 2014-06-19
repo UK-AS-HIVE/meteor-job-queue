@@ -1,6 +1,6 @@
 numOfProcessorsRunning = 0
 port = parseInt (if process.env.hasOwnProperty 'ROOT_URL' then process.env['ROOT_URL'].replace /[^0-9]/g, '' else process.env['PORT'])
-affinity = if port >= 4000 then 2 else 0 #TODO rename affinity to something else?
+affinity = if port >= 4000 then 2 else 1 #TODO rename affinity to something else?
 if port == 4022
   affinity = 10
 myHostName = process.env['HOSTNAME'] + ':' + port 

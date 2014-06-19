@@ -3,12 +3,12 @@
   "dependencies": {
     "basePackages": {
       "job-queue": {
-        "path": "."
+        "path": ".."
       }
     },
     "packages": {
       "job-queue": {
-        "path": "."
+        "path": ".."
       },
       "npm": {
         "git": "https://github.com/arunoda/meteor-npm.git",
@@ -17,18 +17,23 @@
       },
       "font-awesome": {
         "git": "https://github.com/nate-strauser/meteor-font-awesome.git",
-        "tag": "v4.0.3",
-        "commit": "61e9361384347547ae144f8228faa4deffda23db"
+        "tag": "v4.1.0",
+        "commit": "ce6b1e92715d1938babc5d69c655c17e387f5926"
       },
       "moment": {
         "git": "https://github.com/acreeger/meteor-moment.git",
-        "tag": "v2.5.1",
-        "commit": "8c9bc5d3fc96705057737cb9743d555417f6e551"
+        "tag": "v2.6.0",
+        "commit": "26156df681750fd6e6ed77043eef32b6653ebbdf"
+      },
+      "meteor-file": {
+        "git": "git://github.com/lindleycb/meteor-file",
+        "branch": "master",
+        "commit": "a526006fe43ec17c7d9d7d3938ed5fa6f34649a8"
       },
       "simple-schema": {
         "git": "https://github.com/aldeed/meteor-simple-schema.git",
-        "tag": "v0.4.0",
-        "commit": "2cc6aac0d35a4e00b065c1437d540b2aefba5241"
+        "tag": "v0.5.1",
+        "commit": "a29956b34d03a4591dbd0eaed9d37009ef48b8db"
       }
     }
   }

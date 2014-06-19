@@ -1,0 +1,7 @@
+{
+  "packages": {
+    "job-queue": {
+      "path": "../"
+    }
+  }
+}
