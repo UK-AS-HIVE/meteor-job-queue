@@ -1,38 +1,33 @@
 meteor-job-queue
 ================
 
-Process batched jobs across a cluster of Meteor web and compute nodes.
-Given a shared Mongo server and a shared file system, this enables construction
-and processing of scalable cloud computation for long-running processes such as:
+A package for processing batched jobs across a cluster of Meteor web and compute nodes.
+This enables construction and processing of scalable server-side computation for long-running
+processes such as:
 
 * video transcoding
 * metadata extraction and indexing
 * thumbnail generation
+* indexing a file system
+* mirroring content from a feed
 
-It also offers potential for geodistributing nodes for reduced endpoint latency (CDN).
+Combined with Meteor's rapid prototyping abilities, this framework should enhance rapid development
+of apps focusing on user interfaces and web standards.  In other words, it aims to take some of the
+burden off of frontend developers who just want to make a fully featured web app.
 
-To demo proof of concept:
+The package offers:
 
-In terminal 1, start the web node:
+1. Processor - a Model for a discrete piece of work that needs to be done
+2. Scheduler - utilities for adding jobs to the queue
+3. Pipelines - contract for defining dependencies and validation on tasks
 
-    git clone git://github.com/UK-AS-HIVE/meteor-job-queue.git
-    cd meteor-job-queue
-    mkdir uploads
-    mrt bundle mjq.tar.gz
-    mrt
+It also comes with a few built-in processors, focusing on common multimedia and file management
+requirements.
 
-In terminal 2, extract the bundled version into another directory, and start a compute node
-connecting to the same Mongo server:
+Web and Compute Nodes
+---------------------
+...
 
-    pushd .
-    cd meteor-job-queue
-    export MONGO_URL=`meteor mongo --url`
-    popd
-    
-    mkdir mjq
-    mv meteor-job-queue/mjq.tar.gz mjq
-    cd mjq
-    ln -s ../meteor-job-queue/uploads bundle/programs/server/uploads
-    tar xzvf mjq.tar.gz
-    HOSTNAME=`hostname` PORT=4001 MONGO_OPLOG_URL=${MONGO_URL} node bundle/main.js
-
+Future Work
+-----------
+...
