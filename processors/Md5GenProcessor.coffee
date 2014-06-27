@@ -7,7 +7,7 @@ class @Processors.Md5GenProcessor extends @Processors.Processor
 
     console.log 'computing md5'
 
-    s = fs.ReadStream './uploads/' + f
+    s = fs.ReadStream f
     md5sum = crypto.createHash 'md5'
     Future = Npm.require 'fibers/future'
 
@@ -23,9 +23,13 @@ class @Processors.Md5GenProcessor extends @Processors.Processor
     @finish()
     return {md5: md5}
 
+  @inputSchema: new SimpleSchema
+    'file.name':
+      type: String
+
   @outputSchema: new SimpleSchema
     md5:
       type: String
-      regEx: /[a-f0-9]{32}/ #TODO have Noah check this out
+      regEx: /[a-f0-9]{32}/
       min: 32
       max: 32

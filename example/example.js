@@ -33,7 +33,7 @@ if (Meteor.isServer) {
   Meteor.methods({
     addExampleJobs: function(n) {
       for (i=0; i<n; ++i)
-        Scheduler.ScheduleJob('Md5GenProcessor', [], [], {file: {name: 'testfile.jpg'}});
+        Scheduler.ScheduleJob('Md5GenProcessor', [], [], {file: {name: './uploads/testfile.jpg'}});
     },
     clearExampleJobs: function() {
       JobQueue.remove({status: {$in: ['done', 'error']} });
