@@ -1,6 +1,12 @@
 numOfProcessorsRunning = 0
 port = parseInt (if process.env.hasOwnProperty 'ROOT_URL' then process.env['ROOT_URL'].replace /[^0-9]/g, '' else process.env['PORT'])
-affinity = if port >= 4000 then 2 else 1 #TODO rename affinity to something else?
+
+affinity = Npm.require('os').cpus().length
+
+# Reserve a core for serving web clients
+if port < 4000
+  affinity--
+
 if port == 4022
   affinity = 10
 myHostName = process.env['HOSTNAME'] + ':' + port 
@@ -8,7 +14,7 @@ global = this
 Fiber = Npm.require 'fibers'
 
 console.log 'Port: ' + port
-console.log 'Afinnity: ' + affinity
+console.log 'Affinity: ' + affinity
 
 @CurrentUploads = {}
 
