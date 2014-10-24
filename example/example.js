@@ -27,7 +27,7 @@ if (Meteor.isClient) {
 if (Meteor.isServer) {
 
   Meteor.startup(function() {
-    JobQueue.remove({});
+    //JobQueue.remove({});
   });
 
   Meteor.methods({

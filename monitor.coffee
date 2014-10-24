@@ -37,8 +37,16 @@ initiateClaim = (id) ->
   else
     console.log "Job with ID: " + id + " was not acceptable."
 
+moveToStandardCwd = ->
+  cwd = process.cwd()
+  console.log 'cwd', cwd
+  if cwd.indexOf('.meteor') isnt -1
+    console.log 'Running unbundled, moving out of .meteor dir'
+    process.chdir '../../../../..'
+
 claim = (id) ->
   console.log 'Attempting to claim job...'
+  moveToStandardCwd()
   numChanged = JobQueue.update {_id: id, hostname: ''}, {$set: {hostname: myHostName}}  
   if numChanged > 0
     job = JobQueue.findOne {_id: id} 

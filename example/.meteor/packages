@@ -6,4 +6,4 @@
 standard-app-packages
 autopublish
 insecure
-job-queue
+hive:job-queue
