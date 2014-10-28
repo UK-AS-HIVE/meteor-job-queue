@@ -38,11 +38,8 @@ initiateClaim = (id) ->
     console.log "Job with ID: " + id + " was not acceptable."
 
 moveToStandardCwd = ->
-  cwd = process.cwd()
-  console.log 'cwd', cwd
-  if cwd.indexOf('.meteor') isnt -1
-    console.log 'Running unbundled, moving out of .meteor dir'
-    process.chdir '../../../../..'
+  while process.cwd().indexOf('.meteor') isnt -1
+    process.chdir '..'
 
 claim = (id) ->
   console.log 'Attempting to claim job...'
