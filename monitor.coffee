@@ -16,8 +16,6 @@ Fiber = Npm.require 'fibers'
 console.log 'Port: ' + port
 console.log 'Affinity: ' + affinity
 
-@CurrentUploads = {}
-
 findRandomJob = () -> 
   if affinity > 0
     #TODO make this work on some kind of schedule, not just find next randomly acceptable job

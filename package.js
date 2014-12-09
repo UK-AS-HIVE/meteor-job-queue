@@ -19,11 +19,9 @@ Package.onUse(function(api, where) {
     'processors/base/Processor.coffee',
     'monitor.coffee', 
     'pipelines.coffee', 
-    'UploadProcessorCallback.coffee', 
     'processors/Md5GenProcessor.coffee', 
     'processors/ThumbnailProcessor.coffee', 
     'processors/TikaProcessor.coffee', 
-    'processors/UploadProcessor.coffee', 
     'processors/VideoTranscodeProcessor.coffee'], 
     'server');
 
