@@ -28,8 +28,7 @@ findRandomJob = () ->
 
 initiateClaim = (id) ->
   document = JobQueue.findOne {_id: id}
-  if (numOfProcessorsRunning < affinity and document.processor != 'UploadProcessor') or 
-  (document.processor is 'UploadProcessor' and port < 4000) 
+  if (numOfProcessorsRunning < affinity)
     console.log "Job looks acceptable. Trying to claim job with ID: " + id
     claim id
   else
