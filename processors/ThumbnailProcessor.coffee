@@ -1,39 +1,47 @@
 class @Processors.ThumbnailProcessor extends @Processors.Processor
   process: ->
-    ###TODO some thoughts: do we want this to determine automatically how to make the thumbnail?
-    # I would think so. I like the idea of simply running this and it can determine what kind of
-    # thumbnail to make. However, that also implies that we need to either:
-    #   a) trust the extension of the file, or
-    #   b) run tika and decide what kind of file it is
-    # In the interest of modularization, I don't like the idea of making Tika a necessary component
-    # of this processor. I feel like they should all be independent. However, I'd be okay if we
-    # guarantee that Tika is run on all files first, so we know that metadata will be there (In thi
-    # case I guess 'there' is in a database somewhere (or fileserver?))
-    #
-    # Anyhoo, for now I'm going to have this only work for images. Another possibility might be to
-    # have seperate processors for each file type, and a 'smart' version of the processor that will
-    # take in a file, run tika, and decide how to best proceed. I kind of like that idea, and think
-    # it would could be expanded to work well with other processors
-    ###
+    #I took out a lot of the previous thoughts. ImageMagick can identify videos and try to make thumbnails, but it'll make thumbnails for every frame if a frame isn't specified.
+    #I still like the idea of a smart processor? But that's a later disucssion. 
+    #It takes forever for IM to identify whether or not it's a video, so we just give it a frame no matter what. 
     @setStatus 'processing'
     Future = Npm.require 'fibers/future'
-    im = Meteor.require 'imagemagick'
+    gm = Npm.require 'gm'
+
     f = @settings.file.name
+    t = f.substr 0, f.lastIndexOf('.') || f;
+    convertFuture = new Future()
     thumbnailFuture = new Future()
-    im.convert ['uploads/' + f, '-resize', '64x64', './uploads/thumbnail_'+f+'.jpg'], -> #TODO don't use f
-      thumbnailFuture.return {}
-    thumbnailFuture.wait()
     
+    gm f+'[0]' #Just use the first frame, in case we're getting passed an animated gif or video.
+    .options({imageMagick: true})
+    .resize(64,64)
+    .write t + '_thumbnail.jpg', (err) ->
+      convertFuture.return(true)
+      if err 
+        console.log("Err in writing thumbnail: " + err)
+        convertFuture.return(false)
+    
+    file = {} #Temp object to store until we can move back into the parent settings. This is hacky because I'm bad at js
+    if convertFuture.wait()
+      gm t + '_thumbnail.jpg'
+      .options({imageMagick: true})
+      .identify (err, data) ->
+        file.format = data.format
+        file.name = data.path
+        file.size = data.Filesize
+        thumbnailFuture.return(file)
+
     @finish()
-    return _.pick @settings, file
+    @settings.file = thumbnailFuture.wait()
+    return @settings
 
   @outputSchema: new SimpleSchema
-    file:
+    'file':
       type: Object
     'file.name':
       type: String
-    'file.type':
+    'file.format':
       type: String
-      allowedValues: ["jpg"]
+      allowedValues: ["JPEG"]
     'file.size':
-      type: Number
+      type: String
