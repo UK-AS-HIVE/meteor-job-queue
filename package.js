@@ -5,7 +5,7 @@ Package.describe({
 });
 
 Npm.depends({
-  "imagemagick": "0.1.3"
+  "gm": "1.17.0"
 });
 
 Package.onUse(function(api, where) {
