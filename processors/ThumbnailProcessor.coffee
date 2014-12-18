@@ -16,10 +16,11 @@ class @Processors.ThumbnailProcessor extends @Processors.Processor
     .options({imageMagick: true})
     .resize(64,64)
     .write t + '_thumbnail.jpg', (err) ->
-      convertFuture.return(true)
       if err 
         console.log("Err in writing thumbnail: " + err)
         convertFuture.return(false)
+      else
+        convertFuture.return(true)
     
     file = {} #Temp object to store until we can move back into the parent settings. This is hacky because I'm bad at js
     if convertFuture.wait()
