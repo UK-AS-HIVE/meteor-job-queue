@@ -3,12 +3,10 @@ port = parseInt (if process.env.hasOwnProperty 'ROOT_URL' then process.env['ROOT
 
 affinity = Npm.require('os').cpus().length
 
-# Reserve a core for serving web clients
-if port < 4000
+#If this is a web node, reserve a core for serving web clients? Maybe drop this to 1 core?
+if Meteor.settings.jobQueue.serverType == "web"
   affinity--
 
-if port == 4022
-  affinity = 10
 myHostName = process.env['HOSTNAME'] + ':' + port 
 global = this
 Fiber = Npm.require 'fibers'
@@ -16,10 +14,9 @@ Fiber = Npm.require 'fibers'
 console.log 'Port: ' + port
 console.log 'Affinity: ' + affinity
 
-findRandomJob = () -> 
+findOldestJob = () -> 
   if affinity > 0
-    #TODO make this work on some kind of schedule, not just find next randomly acceptable job
-    possibleJob = JobQueue.findOne {hostname: '', waitingOn: {$size: 0}} 
+    possibleJob = JobQueue.findOne {hostname: ''}, {sort: ['submitTime', 'ascending']}
     if possibleJob
       console.log "Found a possible job."
       initiateClaim possibleJob._id
@@ -50,7 +47,7 @@ claim = (id) ->
       processorClass = Processors[job.processor] 
       if processorClass is undefined
         console.log "Couldn't find the processor " + job.processor + ". Did you make a typo?"
-      processor = new processorClass(id, job.settings, job.parents)
+      processor = new processorClass(id, job.settings)
       output = {}
       try
         output = processor.process()
@@ -61,7 +58,6 @@ claim = (id) ->
           JobQueue.update {_id: id}, {$set: {status: 'failed validation'}}
         else
           JobQueue.update {_id: id} , {$set: {output: output}}
-          JobQueue.update {waitingOn: id},{$pull: {waitingOn: id}}, {multi: true}
 
       catch error
         console.log 'ERROR: ' + error
@@ -70,11 +66,11 @@ claim = (id) ->
       finally
         numOfProcessorsRunning--
         console.log 'Job Completed! Looking for new jobs.'  
-        findRandomJob()  
+        findOldestJob()  
     fiber.run() #Warning: non-blocking, gets yielded out of 
   else
     console.log 'Could not accept job with ID: ' + id + '. Looking for new job.'
-    findRandomJob() #will keep looking for jobs as long as it can find one without a host
+    findOldestJob() #will keep looking for jobs as long as it can find one without a host
 
 Meteor.startup ->
   console.log 'myHostName: ' + myHostName
@@ -83,13 +79,10 @@ Meteor.startup ->
   statusPendingCursor = JobQueue.find {status: 'pending'}
   statusPendingCursor.observeChanges
     changed: (id, fields) -> 
-      if fields.hasOwnProperty('waitingOn')
-        if fields.waitingOn.length is 0
-          initiateClaim id
+      initiateClaim id
   
   noHostCursor = JobQueue.find {hostname: ''}
   noHostCursor.observeChanges
     added: (id, fields) ->
       console.log 'Added: ' + id
-      if fields.waitingOn.length is 0
-        initiateClaim id
+      initiateClaim id

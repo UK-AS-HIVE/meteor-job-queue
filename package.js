@@ -18,7 +18,7 @@ Package.onUse(function(api, where) {
   api.addFiles([
     'processors/base/Processor.coffee',
     'monitor.coffee', 
-    'pipelines.coffee', 
+    'scheduler.coffee', 
     'processors/Md5GenProcessor.coffee', 
     'processors/ThumbnailProcessor.coffee', 
     'processors/TikaProcessor.coffee', 
