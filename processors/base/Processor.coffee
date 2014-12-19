@@ -1,6 +1,6 @@
 @Processors = {}
 class @Processors.Processor
-  constructor: (@jobQueueId, @settings, @parents) ->
+  constructor: (@jobQueueId, @settings) ->
     console.log 'New ' + @constructor.name + ' constructed' 
     #console.log @settings
     #processor = this
@@ -12,13 +12,10 @@ class @Processors.Processor
   
   setStatus: (s) ->
     JobQueue.update {_id: @jobQueueId}, {$set: {status: s}}
-    #if setting status to complete
-    # remove my ID from any waitingOn fields #because we are finished waiting on me
   
   finish: ->
     #console.log 'DEBUG finish has been called'
     @setStatus 'done'
-    #JobQueue.update {waitingOn: @jobQueueId}, {$pull: {waitingOn: @jobQueueId}}, {multi: true}
   
   @inputSchema: {}
   
