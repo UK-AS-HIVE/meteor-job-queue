@@ -1,0 +1,40 @@
+<head>
+  <title>JobQueueBenchmark</title>
+</head>
+
+<body>
+  <h1>Welcome to Meteor!</h1>
+
+  <button id="run-benchmarks">Run Benchmarks</button>
+
+  <table>
+    <tbody>
+      {{#each benchmarkResults}}
+      <td>
+        <h4>{{benchmarkName}}</h4>
+        Started: {{startTime}}<br/>
+        Ended: {{endTime}}<br/>
+        # total: {{totalCount}}<br/>
+        # pending: {{pendingCount}}<br/>
+        # active: {{activeCount}}<br/>
+        # done: {{doneCount}}<br/>
+      </td>
+      {{/each}}
+    </tbody>
+  </table>
+
+  <table>
+    <tbody>
+      {{#each job}}
+        <tr>
+          <td>{{_id}}</td>
+          <td>{{processor}}</td>
+          <td>{{status}}</td>
+          <td>{{hostname}}</td>
+          <td>{{inspect settings}}</td>
+        </tr>
+      {{/each}}
+    </tbody>
+  </table>
+</body>
+

@@ -71,7 +71,8 @@ claim = (id) ->
     console.log 'Could not accept job with ID: ' + id + '. Looking for new job.'
     findRandomJob() #will keep looking for jobs as long as it can find one without a host
 
-Meteor.startup ->
+# Manually call this to start up the monitor
+JobQueue.startupWorker = ->
   console.log 'myHostName: ' + myHostName
   console.log 'concurrent process limit: ' + affinity
 
