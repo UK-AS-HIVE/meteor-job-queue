@@ -4,7 +4,7 @@ port = parseInt (if process.env.hasOwnProperty 'ROOT_URL' then process.env['ROOT
 affinity = Npm.require('os').cpus().length
 
 #If this is a web node, reserve a core for serving web clients? Maybe drop this to 1 core?
-if Meteor.settings.jobQueue.serverType == "web"
+if Meteor.settings.jobQueue?.serverType == "web"
   affinity--
 
 myHostName = process.env['HOSTNAME'] + ':' + port 
