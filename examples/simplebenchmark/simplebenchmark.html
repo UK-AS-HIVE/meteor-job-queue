@@ -7,13 +7,24 @@
 
   <button id="run-benchmarks">Run Benchmarks</button>
 
+  <div>
+    <svg width="480" height="90">
+      {{#each lineSegment}}
+        <line stroke="red" x1="{{x1}}" y1="{{y1}}" x2="{{x2}}" y2="{{y2}}"></line>
+      {{/each}}
+    </svg>
+  </div>
+
+  <div>
+    Rate: {{jobsPerSecond}} jobs / sec
+  </div>
+
   <table>
     <tbody>
       {{#each benchmarkResults}}
       <td>
         <h4>{{benchmarkName}}</h4>
-        Started: {{startTime}}<br/>
-        Ended: {{endTime}}<br/>
+        {{time}}<br/>
         # total: {{totalCount}}<br/>
         # pending: {{pendingCount}}<br/>
         # active: {{activeCount}}<br/>
